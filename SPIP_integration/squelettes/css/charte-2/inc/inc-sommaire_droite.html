@@ -1,0 +1,21 @@
+[(#REM) Colonne de droite de la page d'accueil
+  Pour ajouter des blocs de type "A noter", voir http://www.harmoweb.cnrs.fr/spip.php?article259
+
+  Paramètres passés par l'environnement SPIP appelant ce squelette:
+  - lang : langue demandée pour la génération de la page web
+
+]
+    <div class="a-noter bloc hal">
+      <h2><span><:dernieres_publis:></span>
+          <a href="https://hal.archives-ouvertes.fr/BCL" title='Collection HAL du laboratoire BCL' target="_blank"><img src='images/logo_hal_white.png' class="logo-hal" alt="HAL" /></a>
+      </h2>
+      
+[(#MODELE{webpage_from_hal}{url=https://hal-unice.archives-ouvertes.fr/Public/afficheRequetePubli.php?collection_exp=BCL&NbAffiche=10&solrQuery=producedDate_s%3A%5B2000+TO+[(#EVAL{date('Y-m-d')})]%5D&CB_auteur=oui&CB_titre=oui&CB_annee_publi=oui&CB_article=oui&CB_vignette=oui&CB_typdoc=oui&CB_resume=oui&CB_video=oui&langue=[(#ENV{lang}|=={'fr'}|?{'Francais','Anglais'})]&tri_exp=date_publi&ordre_aff=TA&Fen=Aff&css=url_not_found/../css/VisuRubriqueEncadre.css})]
+
+[(#REM) cf. https://haltools.archives-ouvertes.fr/?action=export&lang=fr pour la doc pour generer ce genre d'URLs.
+	On aurait aussi pu faire &labos_exp=Bases%20Corpus%20Langage à la place de collection_exp=BCL, mais mieux vaut passer par la collection BCL.
+]
+
+	  <li class="rubrique"><a href="https://hal-unice.archives-ouvertes.fr/BCL/"><i>+ de résultats dans la Collection HAL du laboratoire BCL</i></a></li>
+    </div>
+

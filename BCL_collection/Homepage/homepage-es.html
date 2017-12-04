@@ -1,0 +1,38 @@
+
+<!-- ATTENTION: le code HTML ci-dessous présuppose que l'on ait bien mis dans l'en-tete (privileges > site web > en-tete > ajouter un logo de type texte) la balise script suivante : 
+  <script src="https://hal.archives-ouvertes.fr/BCL/public/collection_hal.js"></script>
+-->
+
+
+<h3>Colección HAL del <a href="http://bcl.cnrs.fr/" target="_blank">laboratorio BCL</a></h3>
+<div class="row">
+<div class="col-xs-12 col-sm-7 col-md-8 col-lg-9"><widget>{"type":"search","title":"Buscar"}</widget></div>
+<div class="col-xs-12 col-sm-5 col-md-4 col-lg-3 voir-aussi"><widget>{"type":"link","title":"Ver también","links":{"http://bcl.cnrs.fr/?lang=es":"Sitio web del laboratorio BCL"}}</widget></div>
+</div>
+<div class="row">
+<div class="col-xs-12 col-sm-12 col-md-8 col-lg-6">
+<div id="boutons_supplementaires" class="btn-group" style="margin-bottom: 10px;">
+<div><button id="btn-flux" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown">
+		<span class="glyphicon glyphicon-rss" style="background: url('https://hal.archives-ouvertes.fr/BCL/public/logo_ATOM_CC_NC_32px.png') no-repeat; background-size:100%; width:16px; height:16px; display:inline-block; margin-right:10px; position:relative; top:-1px;">&nbsp;</span>Feed <span class="caret">&nbsp;</span>
+</button>
+<ul class="dropdown-menu pull-right" role="menu" aria-labelledby="btn-flux">
+<li><a class="btn btn-xs" title="RSS Feed en formato ATOM" href="https://api.archives-ouvertes.fr/search/BCL/?omitHeader=true&amp;wt=atom&amp;q=collCode_s%3A%28BCL%29&amp;fq=collCode_s%3ABCL&amp;defType=edismax&amp;rows=50">ATOM (recomendado)</a></li>
+<li><a class="btn btn-xs" title="RSS Feed en formato RSS" href="https://api.archives-ouvertes.fr/search/BCL/?omitHeader=true&amp;wt=rss&amp;q=collCode_s%3A%28BCL%29&amp;fq=collCode_s%3ABCL&amp;defType=edismax&amp;rows=50">RSS</a></li>
+</ul>
+</div>
+</div>
+<widget>{"type":"last","title":"Últimos documentos archivados en HAL","limit":"15"}</widget></div>
+<div class="hidden-sm hidden-md hidden-lg" style="font-size: 1px;">&nbsp;<!-- evite l'apparition d'un bug du à la combinaison float-right + width 100% sur le div precedent --></div>
+<div class="col-xs-6 col-sm-6 col-sm-offset-0 col-md-4 col-lg-3"><widget>{"type":"count","title":"# de documentos","format":"file"}</widget></div>
+<div class="col-xs-6 col-sm-6 col-sm-offset-0 col-md-4 col-lg-3"><widget>{"type":"count","title":"# de avisos bibliográficos","format":"notice"}</widget></div>
+<div class="hidden-sm hidden-md hidden-lg" style="font-size: 1px;">&nbsp;<!-- evite l'apparition d'un bug du à la combinaison float-right + width 100% sur le div precedent --></div>
+<div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 graphique-distribution"><widget>{"type":"stats","title":"Desglose por tipo","format":"typdoc"}</widget></div>
+<div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 graphique-evolution"><widget>{"type":"stats","title":"Evolución","format":"evol"}</widget></div>
+<div class="col-xs-12 col-sm-6 col-md-4 col-lg-6"><widget>{"type":"cloud","title":"Nube de palabras"}</widget></div>
+<div class="hidden-sm hidden-md hidden-lg" style="font-size: 1px;">&nbsp;<!-- evite l'apparition d'un bug du à la combinaison float-right + width 100% sur le div precedent --></div>
+<div class="col-xs-12 col-sm-6 col-md-8 col-md-offset-0 col-lg-6">
+<div id="boutons_supplementaires" class="btn-group" style="margin-bottom: 10px;">
+<div><a class="btn btn-default btn-sm" title="RSS Feed del sitio web del laboratorio BCL" href="http://bcl.cnrs.fr/spip.php?page=backend&amp;lang=es" type="button"> <span class="glyphicon glyphicon-rss" style="background: url('https://hal.archives-ouvertes.fr/BCL/public/logo_ATOM_CC_NC_32px.png') no-repeat; background-size: 100%; width: 16px; height: 16px; display: inline-block; margin-right: 10px; position: relative; top: -1px;">&nbsp;</span>RSS Feed </a></div>
+</div>
+<widget>{"type":"feed","title":"RSS Feed del sitio web del laboratorio","href":"http://bcl.cnrs.fr/spip.php?page=backend&amp;lang=fr","limit":"10"}</widget></div>
+</div>

@@ -1,0 +1,151 @@
+<!-- ATTENTION: avant de faire le copier/coller dans HAL, descendre jusqu'au premier <p> et supprimer tout ce qui se trouve avant (il faut virer tout le <head>)
+
+Le but des quelques lignes ci-dessous est simplement de mimer la structure du site HAL pour que l'on puisse prévisualiser le rendu (et debugger le javascript) dans un navigateur web.
+
+<html>
+<head>
+<link rel="stylesheet" href="http://static.ccsd.cnrs.fr/v3/css/bootstrap.css" type="text/css" media="screen">
+<link rel="stylesheet" href="http://static.ccsd.cnrs.fr/css/ccsd.css" type="text/css" media="screen">
+<link rel="stylesheet" href="http://aurehal.archives-ouvertes.fr/css/hal.css" type="text/css" media="screen">
+<link href="https://hal.archives-ouvertes.fr/BCL/public/style.css" rel="stylesheet" type="text/css" >
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script src="https://hal.archives-ouvertes.fr/BCL/public/collection_hal.js"></script>
+</head>
+<body>
+
+<!-- copier/coller dans HAL le code ci-dessous : -->
+
+<p><strong>Formes auteurs des membres du labo ayant au moins une publication dans HAL :</strong></p>
+<script src="https://hal.archives-ouvertes.fr/BCL/public/lazy.js"></script>
+<table id='liste_membres_BCL'>
+<tr><td><p id="mybiblio-requirements">Pour continuer, vous devez activer Javascript dans votre navigateur internet, puis recharger cette page.</p></td></tr>
+</table>
+<script>// <![CDATA[
+
+	function insensitive(s) {
+		return removeDiacritics(s.toLowerCase()).replace(new RegExp("[^a-z]", 'g'), " ");
+	}
+
+	function validClassName(s) {
+		return removeDiacritics(s.toLowerCase()).replace(new RegExp("[^a-z]", 'g'), "-");
+	}
+
+	var listeMembres = [];
+	var listeFormesAuteurs = [];
+	$('#liste_membres_BCL').html("<tr><td>recherche en cours...</td></tr>");
+	$.when (getMembresBCL(function(liste) {listeMembres=liste;}, function(errno) {
+			$('#liste_membres_BCL').html("<tr><td>Une erreur est survenue lors de la recuperation de la liste des membres du labo.</td></tr>");
+		}), getFormesAuteurs("BCL", [199944, 107319], function(liste) {listeFormesAuteurs=liste;}, function(errno) {
+			$('#liste_membres_BCL').html("<tr><td>Une erreur est survenue lors de la recuperation des formes auteurs.</td></tr>");
+		})
+	).done(function (response1, response2) {
+		var index_membres_par_nom = {};
+		var index_membres_par_idhal_s = {};
+		
+		Lazy(listeMembres).sortBy(function(x) {return x.nom+" "+x.prenom}).each(function(x){
+			x.full_name=x.nom+" "+x.prenom;
+			index_membres_par_nom[insensitive(x.full_name)]=x;
+			if (x.idHal_s!="") {
+				index_membres_par_idhal_s[x.idHal_s]=x;
+			}
+		});
+		
+		var buffered_line = "<tr><th>Nom complet (Nom Prenom)</th><th>IdHAL</th><th>D&eacute;p&ocirc;ts</th><th>Arrivé au labo&nbsp;</th><th>Parti du labo&nbsp;:</th></tr>";
+		var output_code = "";
+		var doublons_sans_idhal = [];
+		var liste_sans_doublons = [];
+		
+		Lazy(listeFormesAuteurs).groupBy(function(x) {return x.name+':'+x.idhal}).each(function(x){var somme=0; for (var i = 0; i < x.length; i++) {somme+=x[i].nb_depots}; x[0].nb_depots=somme; liste_sans_doublons.push(x[0])});
+		
+		for (var i = 0; i < liste_sans_doublons.length; i++) {
+			var index = index_membres_par_nom[insensitive(liste_sans_doublons[i].name)];
+			if (index) {
+				if (!index.formes_auteurs) { index.formes_auteurs = []; }
+				index.formes_auteurs.push(liste_sans_doublons[i]);
+				if (index.idHal_s=="") {
+					index.idHal_s=liste_sans_doublons[i].idhal;
+				}
+			}
+		}
+		
+		for (var i = 0; i < liste_sans_doublons.length; i++) {
+			if (!index_membres_par_nom[insensitive(liste_sans_doublons[i].name)]) {
+				var index = index_membres_par_idhal_s[liste_sans_doublons[i].idhal];
+				var mots = insensitive(liste_sans_doublons[i].name).split(/\s/);
+				if (!index) { index = index_membres_par_nom[mots[0]+" "+mots.slice(2).join(" ")]; }
+				if (!index) { index = index_membres_par_nom[mots.slice(0,mots.length-1).join(" ")]; }
+				if (!index && mots.length==2) { index = index_membres_par_nom[mots[1]+" "+mots[0]]; }
+				if (index) {
+					if (!index.formes_auteurs) { index.formes_auteurs = []; }
+					index.formes_auteurs.push(liste_sans_doublons[i]);
+				} else {
+					// c'est un inconnu, on le rajoute :
+					listeMembres.push({"full_name":liste_sans_doublons[i].name ,"idHal_s":liste_sans_doublons[i].idhal ,"formes_auteurs":[liste_sans_doublons[i]] });
+					index_membres_par_nom[insensitive(liste_sans_doublons[i].name)]=listeMembres[listeMembres.length];
+					if (liste_sans_doublons[i].idhal!="") {
+						index_membres_par_idhal_s[liste_sans_doublons[i].idhal]=listeMembres[listeMembres.length];
+					}
+				}
+			}
+		}
+		
+		Lazy(listeMembres).each(function(membre) {
+			if (!membre.formes_auteurs) { membre.formes_auteurs = []; }
+			if (membre.formes_auteurs.length==0) {
+				if (membre.idHal_s!="")	{ // s'il possède un idhal, il a droit de cité !
+					membre.formes_auteurs.push({idhal: membre.idHal_s, name: membre.nom+" "+membre.prenom, nb_depots: 0});
+				}
+			}
+		});
+		
+		Lazy(listeMembres).sortBy(function(m) {return m.full_name}).each(function(membre) {
+			Lazy(membre.formes_auteurs).each(function (forme_auteur) {
+				var forme_non_associee_a_l_idhal=(membre.idHal_s!="" && forme_auteur.idhal=="");
+				var membre_officiel=(membre.nom && membre.prenom);
+				if (forme_non_associee_a_l_idhal) {
+					doublons_sans_idhal.push(forme_auteur);
+				}
+				output_code=output_code+"<tr class='"+(membre.date_depart?'parti ':'')+(forme_non_associee_a_l_idhal?'idhal-manquant ':'')+"' "+(forme_non_associee_a_l_idhal? "id='doublon-"+validClassName(forme_auteur.name)+"'":"")+">";
+				output_code=output_code+"<td"+(!membre_officiel? " class='inconnu'":"")+">"+forme_auteur.name+"</td>";
+				output_code=output_code+"<td>"+(forme_auteur.idhal==""?"":'<span class="glyphicon glyphicon-user" data-toggle="tooltip" data-placement="auto" data-original-title="IdHal de l\'auteur"></span>&nbsp;')+forme_auteur.idhal+"</td>";
+				var name = forme_auteur.name.split(/\s/);
+				output_code=output_code+"<td><a target='blank' class='btn "+(forme_auteur.nb_depots>0?"btn-primary":"btn-default")+" btn-xs pull-right' href='https://hal.archives-ouvertes.fr/BCL/search/index/?qa%5BauthFullName_s%5D%5B%5D=%22"+encodeURIComponent(name[name.length-1]+" "+name.splice(0,name.length-1).join(" "))+"%22"+(forme_auteur.idhal==""?"":"&qa%5BauthIdHal_s%5D%5B%5D="+forme_auteur.idhal)+ "&submit_advanced=Rechercher&rows=30'>"+forme_auteur.nb_depots+"</a></td>";
+				output_code=output_code+(membre.date_arrivee?"<td>"+membre.date_arrivee:"<td>")+"</td>";
+				output_code=output_code+(membre.date_depart?"<td class='parti'>"+membre.date_depart:"<td>")+"</td></tr>";
+				return true;
+			});
+		});
+		
+		if (output_code!="") {
+			$('#liste_membres_BCL').html(output_code);
+		}
+		if (doublons_sans_idhal.length>0) {
+			var query = "("+encodeURIComponent(doublons_sans_idhal[0].name)+")";
+			for (var i = 1; i < doublons_sans_idhal.length; i++) {
+				query = query + "+OR+("+encodeURIComponent(doublons_sans_idhal[i].name)+")";
+			}
+			for (var i = 0; i < doublons_sans_idhal.length; i++) {
+				$('tr#doublon-'+validClassName(doublons_sans_idhal[i].name)+' td:nth-child(3)').html(doublons_sans_idhal[i].nb_depots);
+			}
+			$.ajax("https://api.archives-ouvertes.fr/search/BCL", {data: 'q=authFullName_t:'+query+'&rows=0&wt=json&facet=true&facet.field=authIdHasStructure_fs&facet.mincount=1&facet.limit=1000', dataType: 'json', jsonp: false, success: function( d ) {
+			  var reponses = d.facet_counts.facet_fields.authIdHasStructure_fs;
+			  if (reponses !== undefined) {
+  				  var index_authors = {};
+				  for (var i = 0; i < reponses.length; i+=2) {
+				    var rep = reponses[i]+'';
+				    rep = rep.split(/_FacetSep_|_JoinSep_/);
+				    if (rep[2]=="199944" || rep[2]=="107319") {
+				    	var name = rep[1].split(/\s/);
+				    	index_authors[name.splice(1).join(" ")+" "+name[0]]=rep[0];
+				    }
+				  }
+	  			  for (var i = 0; i < doublons_sans_idhal.length; i++) {
+				  		$('tr#doublon-'+validClassName(doublons_sans_idhal[i].name)+' td:nth-child(3)').html((index_authors[doublons_sans_idhal[i].name]?"<a target='blank' class='btn btn-default btn-xs pull-right' href='https://hal.archives-ouvertes.fr/BCL/search/index/q/authId_i%3A"+index_authors[doublons_sans_idhal[i].name]+"/rows/30/'>"+doublons_sans_idhal[i].nb_depots+"</a>":doublons_sans_idhal[i].nb_depots));
+				  }
+			  }
+			}});
+		}
+	});
+// ]]></script>
+</body>
+</html>

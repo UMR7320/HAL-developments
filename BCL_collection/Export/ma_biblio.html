@@ -1,0 +1,245 @@
+<!-- ATTENTION: avant de faire le copier/coller dans HAL, descendre jusqu'au premier <p> et supprimer tout ce qui se trouve avant (il faut virer le div .navbar-fixed-top ainsi que tout le <head>)
+
+Le but des quelques lignes ci-dessous est simplement de mimer la structure du site HAL pour que l'on puisse prévisualiser le rendu (et debugger le javascript) dans un navigateur web.
+
+
+<html lang='fr'>
+<head>
+<meta charset="UTF-8">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script src="https://hal.archives-ouvertes.fr/BCL/public/collection_hal.js"></script>
+<style> #continue-anyway {float: right;} </style>
+</head>
+<body>
+<div class="navbar-fixed-top">
+	<div class="navbar-right">
+	<ul></ul>
+	</div>
+	<div class="navbar-collapse"><div class="navbar-right"><ul style="list-style-type: none">
+				<li>Nom complet (Prenom Nom)&nbsp;:<a href="#"><textarea rows="2" name="nom">Pierre-Aurélien Georges</textarea></a>
+					<form action="#" onSubmit="retrieve_bibliography($('body > .navbar-fixed-top > .navbar-collapse > div.navbar-right > ul > li > a > textarea').val()); return false;"><input type="submit" value="Rechercher"><br/><br/></form>
+				</li>
+	</ul></div></div>
+</div><div id="flash-messages"></div>
+
+<!-- copier/coller dans HAL le code ci-dessous : -->
+
+<p id="myidhal" style="float: right;">&nbsp;</p>
+<p id="mybiblio-requirements" class="alert alert-fixed alert-danger">Pour continuer, vous devez activer Javascript dans votre navigateur internet, puis recharger cette page.<br />Please enable Javascript in your browser, then reload this page.</p>
+<div id="tricks" class="alert alert-fixed alert-info" style="display:none;">
+	<strong>Astuces&nbsp;:</strong><ul>
+<li>Pour n'exporter qu'une s&eacute;lection personnalis&eacute;e de notices bibliographiques, faites une <a id='hal-search-by-idhal' title="Rechercher dans la collection HAL du laboratoire BCL" href="https://hal.archives-ouvertes.fr/BCL/search/index">Recherche</a> en indiquant les crit&egrave;res voulus, puis en haut &agrave; droite de la liste des r&eacute;sultats, cliquez sur le bouton <button id="btn-tools" type="button" class="btn btn-sm btn-default disabled"><i class="glyphicon glyphicon-wrench">&nbsp;</i>Outils&nbsp;<span class="caret"></span></button> puis <button id="btn-tools" type="button" class="btn btn-sm btn-default disabled"><i class="glyphicon glyphicon-export">&nbsp;</i>Exporter&nbsp;<span class="caret"></span></button>.</li>
+<li>Pour r&eacute;cup&eacute;rer de mani&egrave;re exhaustive toutes les publications d'une personne, utilisez comme crit&egrave;re de recherche son <a id="idhal-search-in-aurehal" target="_blank" title="Rechercher l'idHal d'une personne dans le r&eacute;f&eacute;rentiel Aur&eacute;HAL (et vice-versa)" href="https://aurehal.archives-ouvertes.fr/author/browse?critere=idHal_s%3Apierre-aurelien-georges">n° idHal</a> plut&ocirc;t que son nom.</li>
+</ul></<div>
+
+
+<script>// <![CDATA[
+
+// Localization: currently available languages are "en" and "fr".
+var retrieve_bibliography_localization = {
+"please_log_in": {"fr": "Votre <a>Connexion</a> est requise pour pouvoir exporter votre bibliographie.",
+                  "en": "You need to <a>Sign in</a> in order to download you bibliography."},
+"searching":     {"fr": "Recherche en cours...",
+                  "en": "Searching..."},
+"find_all":      {"fr": "Rechercher toutes les publications de l'idHal \"[IDHAL]\" qui sont disponibles sur la plateforme HAL",
+                  "en": "Search all publications available on HAL for idHal \"[IDHAL]\""},
+"aucuns":       {"fr": "aucuns",
+                  "en": "none"},
+"download":      {"fr": "T&eacute;l&eacute;charger",
+                  "en": "Download"},
+"mybiblio_file": {"fr": "ma_biblio__en_",
+                  "en": "my_biblio__in_"},
+"download_pubs": {"fr": "T&eacute;l&eacute;charger la ",
+                  "en": "Download all "},
+"biblio_as_author": {"fr": "pour l'auteur ",
+                     "en": "for author "},
+"biblio_as_editor": {"fr": "pour l'éditeur scientifique ",
+                     "en": "for editor "},
+"biblio_as_seriesEditor": {"fr": "pour les directions de collection de ",
+                     "en": "for series editor "},    
+"pubs_as_author": {"fr": "liste des publications en tant qu'<strong>auteur</strong> (incl. les directions d'ouvrage)",
+                  "en": "publications as <strong>(co)author</strong> (incl. directions of work)"},
+"pubs_as_editor":{"fr": "dépôts où vous êtes mentionné(e) en tant qu'<strong>&eacute;diteur scientifique</strong>",
+                  "en": "submissions where you are cited as <strong>editor</strong>"},
+"pubs_as_seriesEditor":{"fr": "dépôts où vous êtes mentionné(e) en tant que <strong>directeur de collection</strong>",
+                        "en": "submissions where you are cited as <strong>series editor</strong>"},
+"pubs_as_author_notes":{"fr": "",
+                        "en": ""},
+"pubs_as_editor_notes":{"fr": " (attention aux éventuels faux-positifs et aux doublons)",
+                        "en": " (beware of potential false-positives or duplicates)"},
+"pubs_as_seriesEditor_notes":{"fr": " (liste probablement non exhaustive !)",
+                              "en": " (probably a non-exhaustive list!)"},
+"format_xml-tei":{"fr": "au format XML-TEI",
+                  "en": "in XML-TEI format"},
+"format_bibtex": {"fr": "au format BibTeX",
+                  "en": "in BibTeX format"},
+"format_endnote":{"fr": "au format EndNote",
+                  "en": "in EndNote format"},
+"format_csv":    {"fr": "au format CSV (Excel)",
+                  "en": "in CSV (Excel) format"},
+"format_html":    {"fr": "au format HTML (Word)",
+                  "en": "in HTML format (Word)"},
+"format_custom": {"fr": "format personnalis&eacute;...",
+                  "en": "custom format..."},
+"cant_get_fullname": {"fr": "Erreur&nbsp;: impossible de r&eacute;cup&eacute;rer votre nom complet.",
+                      "en": "Error: can't retrieve your full name."},
+"idhal_required":    {"fr": "Afin de pouvoir exporter votre bibliographie, vous devez tout d'abord <a>Cr&eacute;er votre IdHAL</a> et y associer vos diff&eacute;rentes formes auteur.",
+                      "en": "Prior to download your bibliography, you must <a>Create your IdHAL</a> and associate it with your different author forms."},
+"members_only":      {"fr": "Ce service est r&eacute;serv&eacute; aux membres du laboratoire BCL.",
+                      "en": "This service is reserved to BCL's members."},
+"error_occured":     {"fr": "Impossible de récupérer votre IdHAL&nbsp;: une erreur [errno] est survenue.",
+                      "en": "Can't retrieve your IdHAL : a [errno] error occurred."},
+"try_again":         {"fr": "Veuillez réessayer ultérieurement.",
+                      "en": "Please try again later."},
+};
+
+// retrieve_bibliography():
+// Generates HTML buttons allowing download of the whole bibliography of a given person
+// All parameters are optional. When no fullname is given, will try to use current logged-in user's fullname.
+//     This function first checks that the given user is properly logged-in, and generates HTML error message if not.
+//     Optional is_connected parameter may be used to bypass this behavior (or to force logged-in status).
+// Prerequisite: fullname must have the following syntax : "<firstname> <lastname>" (separated with a space char.) and he or she must have an idHal.
+function retrieve_bibliography(fullname, is_connected, available_formats, download_criterias, language) {
+	var lang=language;
+	if (fullname===undefined)
+		fullname = $('body > .navbar-fixed-top > .navbar-collapse > div.navbar-right > ul > li > a').text();
+	if (is_connected===undefined)
+		is_connected = ($(".navbar-fixed-top div.navbar-right > ul").length>0);
+	if (lang===undefined)
+		lang = $('html').attr("lang");
+	if (lang!="fr")
+		lang ="en";
+	if (available_formats===undefined)
+		available_formats = {'xml-tei':'.xml', 'bibtex':'.bib', 'endnote':'.txt', 'csv':'.csv', 'html':'.html', 'custom':'.txt'};
+	if (download_criterias===undefined)
+		download_criterias = {
+			'author': 'authIdHal_s',
+			'editor': 'scientificEditor_t',
+			'seriesEditor': 'seriesEditor_t'};
+	var translated_attr = function(id) {
+		return retrieve_bibliography_localization[id][lang].replace(/<[^>]+>/g, "").replace(/'/g,"&#146;").replace(/"/g,'&quot;');
+	}
+	var translated_url = function(id) {
+		return retrieve_bibliography_localization[id][lang].replace(/\s/g,"+").replace(/'/g,"%27");
+	}
+			
+	if (!is_connected || fullname=="") {
+		$("#mybiblio-requirements").html(retrieve_bibliography_localization['please_log_in'][lang].replace("<a>", "<a href='https://hal.archives-ouvertes.fr/BCL/user/login/forward-controller/page/forward-action/exportmy' class='btn btn-small btn-sm btn-primary'><i class='glyphicon glyphicon-user glyphicon-white'></i> "));
+		$("#mybiblio-requirements").removeClass('alert-danger');
+		$("#mybiblio-requirements").addClass('alert-warning');
+		$("#mybiblio-requirements").show();
+	} else {
+		$("#mybiblio-requirements").removeClass('alert-danger');
+		$("#mybiblio-requirements").html(retrieve_bibliography_localization['searching'][lang]);
+		$("#mybiblio-requirements").addClass('loading');
+		$("#mybiblio-requirements").show();
+		$("#flash-messages").hide();
+		var nom_complet=fullname.trim();
+		if (!nom_complet || nom_complet=="" || nom_complet.length<3) {
+			$("#myidhal").html("");
+			$("#mybiblio-requirements").html(retrieve_bibliography_localization['cant_get_fullname'][lang]);
+			$("#mybiblio-requirements").removeClass('loading');
+			$("#mybiblio-requirements").addClass('alert-danger');
+		} else {
+			getIdHAL("BCL", nom_complet, function(idhal_i, idhal_s, original_name) {
+				if (idhal_s=="") {
+					$("#myidhal").html("");
+					$("#mybiblio-requirements").html(retrieve_bibliography_localization['idhal_required'][lang].replace("<a>", "<a href='https://hal.archives-ouvertes.fr/user/idhal/' class='btn btn-sm btn-success'><span class='glyphicon glyphicon-pencil'></span></i> "));
+					$("#mybiblio-requirements").removeClass('loading');
+					$("#mybiblio-requirements").addClass('alert-warning');
+				} else {
+					$("#myidhal").html("IdHAL"+(idhal_i>0?" "+idhal_i:"")+"&nbsp;: <a title='"+translated_attr('find_all').replace("[IDHAL]", idhal_s)+"' href='https://hal.archives-ouvertes.fr/search/index/q/authIdHal_s%3A%22"+idhal_s+"%22/'>"+idhal_s+"</a>");
+					$("#hal-search-by-idhal").attr("title",retrieve_bibliography_localization['find_all'][lang].replace("[IDHAL]", idhal_s));
+					$("#hal-search-by-idhal").attr("href","https://hal.archives-ouvertes.fr/search/index/q/authIdHal_s%3A%22"+idhal_s+"%22/");
+					$("#idhal-search-in-aurehal").attr("href","https://aurehal.archives-ouvertes.fr/author/browse?critere=idHal_s%3A"+idhal_s);
+					var fullname_criteria="";
+	
+					function generate_HTML_links(link_type, av_formats) {
+						var download_links="<p>" +retrieve_bibliography_localization['pubs_as_'+link_type][lang] +retrieve_bibliography_localization['pubs_as_'+link_type+'_notes'][lang] +"&nbsp;: </p>";
+						if (jQuery.isEmptyObject(av_formats)) {
+							download_links+="<div class='btn-group loading'>&nbsp;</div>";
+						} else {
+							download_links+="<div class='btn-group'><button id='btn-flux' class='btn btn-success dropdown-toggle' type='button' data-toggle='dropdown'><span class='glyphicon glyphicon-export'>&nbsp;</span>"+retrieve_bibliography_localization['download'][lang]+" <span class='caret'>&nbsp;</span></button><ul class='dropdown-menu pull-right' role='menu' aria-labelledby='btn-flux'>";
+							var criteria_value = (download_criterias[link_type].match(new RegExp("idhal", 'i'))?idhal_s:fullname_criteria);
+							for (var format in av_formats) {
+								if (av_formats.hasOwnProperty(format)) {
+									if (format=='html') {
+										url_halweb="https://hal.archives-ouvertes.fr/search/index/?qa%5B"+download_criterias[link_type]+"%5D%5B%5D=%28"+criteria_value+"%29";
+										download_links+="<li><a class='btn btn-xs' title='" +translated_attr('download_pubs') +translated_attr('pubs_as_'+link_type) +", "+translated_attr('format_'+format) +"' href='http://bcl.unice.fr/hal/biblio.php?q="+download_criterias[link_type]+"%3A%28"+criteria_value+"%29"+"&title=HAL+"+encodeURIComponent("<a href=")+"%27"+encodeURIComponent(url_halweb)+"%27%3E"+translated_url('biblio_as_'+link_type)+encodeURIComponent(nom_complet+"</a>")+"' filename='"+translated_attr('mybiblio_file').replace("__","_"+link_type+"_")+format+av_formats[format]+"'>"+retrieve_bibliography_localization['format_'+format][lang]+"</a></li>";
+
+									} else if (format=='custom') {
+										download_links+="<li><a class='btn btn-xs' title='" +translated_attr('download_pubs') +translated_attr('pubs_as_'+link_type) +" ("+translated_attr('format_'+format) +")' href='https://hal.archives-ouvertes.fr/search/advanced-export/uri/%3FomitHeader%3Dtrue%26defType%3Dedismax%26rows%3D2000%26q%3D"+download_criterias[link_type]+"%253A%2528"+criteria_value.replace("%", "%25")+"%2529%26wt%3Dphps'>"+retrieve_bibliography_localization['format_'+format][lang]+"</a></li>"
+									} else {
+										download_links+="<li><a class='btn btn-xs' title='" +translated_attr('download_pubs') +translated_attr('pubs_as_'+link_type) +", "+translated_attr('format_'+format) +"' href='https://api.archives-ouvertes.fr/search/hal/?omitHeader=true&defType=edismax&rows=2000&q="+download_criterias[link_type]+"%3A%28"+criteria_value+"%29"+"&wt="+format+"' filename='"+translated_attr('mybiblio_file').replace("__","_"+link_type+"_")+format+av_formats[format]+"'>"+retrieve_bibliography_localization['format_'+format][lang]+"</a></li>";
+									}
+								}
+							}
+							download_links+="</ul></div>";
+						}
+						return download_links;
+					}
+					
+					var firstnameLastname_required = 0;
+					var html_content="";
+					for (var l_type in download_criterias) {
+						if (download_criterias.hasOwnProperty(l_type)) {
+							html_content += "<div id='pubs_as_"+l_type+"'>";
+							if (download_criterias[l_type].match(new RegExp("idhal", 'i')))
+								html_content += generate_HTML_links(l_type, available_formats);
+							else {
+								html_content += generate_HTML_links(l_type, []);
+								firstnameLastname_required = 1;
+							}
+							html_content += "</div>";
+						}
+					}
+					$("#mybiblio-requirements").removeClass('loading');
+					$("#mybiblio-requirements").html(html_content);
+					
+					if (firstnameLastname_required)
+						getFirstnameLastname(nom_complet, idhal_s, function (firstname, lastname, errno) {
+							fullname_criteria = generate_alternate_names(firstname, lastname);
+							for (var l_type in download_criterias) {
+								var hide_dl_button = function(is_empty, l_type) {
+									var CSS_selector = $("#mybiblio-requirements #pubs_as_"+l_type);
+									if (is_empty)
+										CSS_selector.children(".loading")[0].outerHTML="<p>"+retrieve_bibliography_localization['aucuns'][lang]+"</p>";
+									else
+										CSS_selector.html(generate_HTML_links(l_type, available_formats));
+								};
+								if (download_criterias.hasOwnProperty(l_type))
+									if (!download_criterias[l_type].match(new RegExp("idhal", 'i')))
+										(function (l_type) {is_empty_json_response("https://api.archives-ouvertes.fr/search/hal/", "omitHeader=true&defType=edismax&rows=1&q="+download_criterias[l_type]+"%3A%28"+fullname_criteria+"%29"+"&wt=json'", function(is_empty){hide_dl_button(is_empty, l_type);}, function(){hide_dl_button(false, l_type);} ); })(l_type.slice());
+							}
+						});
+					
+					// $("#mybiblio-requirements").hide();
+					// $("#flash-messages").html("<div class='alert alert-fixed alert-warning mybiblio'><button id='continue-anyway' type='button' class='close' data-dismiss='alert'>Continuer</button><div>Veuillez tout d\'abord verifier que vous avez bien associe toutes vos formes auteurs a votre idHal.</div></div>");
+					// $("#flash-messages").show();
+					$('#continue-anyway').on('click', function(event) {
+						event.preventDefault(); // To prevent following the link (optional)
+						$("#mybiblio-requirements").show();
+					});
+				}	
+				$("#tricks").show();
+			}, function(errno, original_name) {
+				$("#myidhal").html("");
+				$("#mybiblio-requirements").removeClass('loading');
+				$("#mybiblio-requirements").addClass('alert-danger');
+				if (errno==-1) {
+					$("#mybiblio-requirements").html(retrieve_bibliography_localization['members_only'][lang]);
+				} else {
+					$("#mybiblio-requirements").html(retrieve_bibliography_localization['error_occured'][lang].replace("[errno]", (errno==-2?"réseau":errno))+" "+(errno==-2?retrieve_bibliography_localization['try_again'][lang]:""));
+				}
+				$("#tricks").show();
+			});
+		}
+	}
+}
+
+retrieve_bibliography();
+
+// ]]></script>
+
+</body>
+</html>

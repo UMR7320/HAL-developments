@@ -1,0 +1,48 @@
+[(#REM) Contenu de la colonne de droite de la page auteur d'un membre du labo, a.k.a. "page perso"
+
+  Pour ajouter des blocs de type "A noter", voir http://www.harmoweb.cnrs.fr/spip.php?article259
+
+  Paramètres passés par l'environnement SPIP appelant ce squelette:
+  - lang : langue affichée
+
+]
+
+<BOUCLE_membres (bdd_labo:personne){!doublons membre}>
+[(#REM) ceci est une balise "fait maison", qui a pour effet d'aller rechercher dans notre BDD MySQL
+  toutes les informations concernant cette personne : PRENOM, NOM, et IDHAL, s'il en possède un et qu'il est bien renseigné dans la BDD]
+
+	#SET{url_criteres_HAL,"https://hal-unice.archives-ouvertes.fr/Public/afficheRequetePubli.php?NbAffiche=10&CB_auteur=oui&CB_titre=oui&CB_annee_publi=oui&CB_article=oui&CB_vignette=oui&CB_typdoc=oui&CB_resume=oui&CB_video=oui&langue="(#ENV{lang}|=={'fr'}|?{'Francais','Anglais'})"&tri_exp=date_publi&ordre_aff=TA&Fen=Aff&css=url_not_found/../css/VisuRubriqueEncadre.css"}
+	#SET{url_criteres_HAL,(#IDHAL|?{(#GET{url_criteres_HAL}|parametre_url{idHal,#IDHAL}),(#GET{url_criteres_HAL}|parametre_url{auteur_exp,#PRENOM #NOM})})}
+	#SET{derniers_depots,(#MODELE{webpage_from_hal}{url=#GET{url_criteres_HAL}})}
+
+	[(#REM) cf. https://haltools.archives-ouvertes.fr/?action=export&lang=fr pour la doc pour generer ce genre d'URLs]
+
+	<?php
+		$search_url_base="search/index/?submit_advanced=Rechercher&sort=submittedDate_tdate+desc";
+		$IDHAL="[(#IDHAL|replace{'"', })]";
+		if ($IDHAL!="") {
+			if (ctype_digit($IDHAL)) {
+				$search_url_base .= "&qa[authIdHal_i][]=".$IDHAL;
+			} else {
+				$search_url_base .= "&qa[authIdHal_s][]=".urlencode($IDHAL);
+			}
+		} else {
+			$NOM=strtolower(unaccent("[(#NOM|replace{'"', })]"));
+			$PRENOM=strtolower(unaccent("[(#PRENOM|replace{'"', })]"));
+			$search_url_base .= "&qa[authFirstName_t][]=".urlencode($PRENOM)."&qa[authLastName_t][]=".urlencode($NOM);
+		}
+		$url_plus_de_resultats_BCL = "https://hal.archives-ouvertes.fr/BCL/".$search_url_base;
+		$url_plus_de_resultats_HAL = "https://hal.archives-ouvertes.fr/".$search_url_base;
+	?>
+				
+	[(#GET{derniers_depots}|supprimer_tags|oui)
+		<div class="a-noter bloc hal">
+			<h2><span><:dernieres_publis:></span><a href="<?php echo $url_plus_de_resultats_BCL; ?>" title='Voir tous les résultats[ pour "(#IDHAL|?{#IDHAL,#PRENOM #NOM})"] dans la collection HAL du laboratoire BCL' target="_blank"><img src='images/logo_hal_white.png' class="logo-hal" alt="HAL" /></a></h2>
+			[<p class="critere_auteur_HAL">(#IDHAL|?{pour l'idHal ,pour })<a style='display:inline; color:inherit;' href="<?php echo $url_plus_de_resultats_HAL; ?>" title='Voir tous les résultats[ pour "(#IDHAL|?{#IDHAL,#PRENOM #NOM})"] sur la plateforme HAL' target="_blank">"[(#IDHAL|?{#IDHAL,#PRENOM #NOM})]"</a>&nbsp;:</p>]
+			[(#GET{derniers_depots})]
+			<li class="rubrique [(#COMPTEUR_BOUCLE|=={1}|oui) first]"><a href="<?php echo $url_plus_de_resultats_BCL; ?>"><i>+ de résultats dans la Collection HAL du laboratoire BCL</i></a></li>
+			<li class="rubrique [(#COMPTEUR_BOUCLE|=={#TOTAL_BOUCLE}|oui) last]"><a href="<?php echo $url_plus_de_resultats_HAL; ?>"><i>Voir l'ensemble des résultats sur la plateforme HAL</i></a></li>
+		</div>
+	]
+	
+</BOUCLE_membres>

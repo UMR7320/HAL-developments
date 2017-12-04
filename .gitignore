@@ -1,0 +1,7 @@
+.DS_Store
+.settings
+.buildpath
+.project
+.git-ftp-tmp
+.user.ini
+??/.gitignore

@@ -1,0 +1,538 @@
+@CHARSET "UTF-8";
+
+/* CSS utilisé sur la plateforme HAL pour personnaliser notre collection BCL */
+
+/* Le contenu de ce fichier est à copier-coller tel quel (dans le menu Privileges > Site Web > Apparence > Feuille de styles) 
+
+   The content of this file should be copy/paste as is (in menu Privileges > Website > Styles > Stylesheet)
+*/
+
+.navbar {
+min-height:0px;
+margin:0;
+box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.5);
+}
+.navbar .navbar-header {
+min-height:24px;
+}
+.navbar .logo-ccsd,
+.navbar .navbar-toggle,
+.navbar form {
+margin-top:0 !important;
+margin-bottom:0 !important;
+}
+.navbar .navbar-toggle,
+.navbar form .btn {
+padding-top:3px;
+padding-bottom:3px;
+font-size: inherit;
+}
+.navbar .navbar-toggle {
+margin-top: 1px !important;
+}
+.navbar .navbar-toggle .icon-bar + .icon-bar {
+margin-top: 4px !important;
+}
+.navbar img {
+transform: scale(0.75);
+}
+.navbar img.user-photo-thumb {
+transform: scale(1);
+}
+.navbar-nav > li > a {
+padding-top:2px;
+padding-bottom:2px;
+}
+.navbar-nav li.active > a {
+font-weight: bold;
+}
+.navbar-nav .ladoc a:after {
+content: 'umentation';
+}
+#container {
+margin-top:25px;
+}
+#container,
+#container .col-md-12 {
+    padding: 0;
+}
+#container .titre-site {
+font-size: 2em;
+text-shadow: 0px 0px 10px black, 2px 2px 5px black;
+}
+#container .titre-site h1,
+#container .titre-site h2 {
+font-size: 1em;
+white-space: nowrap;
+}
+#container .titre-site,
+#container .titre-site h1,
+#container .titre-site h2 {
+position: relative;
+top: -0.2em;
+color: #faf1ef;
+/*font-family: Arial,Helvetica,sans-serif;*/
+font-size: 1.4em;
+display: inline;
+}
+#container .titre-site a {
+text-decoration: none;
+}
+#container .logo table {
+height:125px;
+background: #782219 url('https://hal.archives-ouvertes.fr/BCL/public/background_hal.jpg') repeat-x;
+}
+#container .logo table tr {
+background: url('https://hal.archives-ouvertes.fr/BCL/public/dessin_HAL.jpg') no-repeat 23em 100%;
+display: block;
+position: relative;
+}
+@media (min-width: 900px) {
+#container .logo table tr {
+background-position: 75% 100%;
+}
+#container .logo td:last-child {
+padding-right: 12%;
+}
+}
+#container .logo td a:hover,
+#container .logo td a:active {
+color: white;
+}
+#container .logo td {
+vertical-align: middle;
+width: 1%;
+}
+#container .logo td:first-child img {
+vertical-align: middle;
+}
+#container .logo td:first-child {
+padding-left: 4%;
+}
+#container .logo td:last-child {
+width:initial;
+}
+#container .logo td:last-child img {
+max-width:525px;
+}
+@media (max-width: 800px) {
+#container .logo td:last-child img {
+max-width: 85%;
+}
+}
+#container .sidebar-nav .nav-tabs > li > a {
+text-transform:uppercase;
+}
+#container .sidebar-nav .nav-tabs > li:last-child:nth-child(even) {
+display:none;
+}
+#container .sidebar-nav .nav-tabs > li:last-child:nth-child(odd) {
+display:block; /* securité pour éviter que la règle précédente ne vienne masquer l'onglet "Privilèges" */
+}
+#container .sidebar-nav{
+padding-left: 3%; 
+}
+#container .corps {
+padding: 0 3%; 
+}
+#container .breadcrumb > li + li::before {
+content: "> ";
+}
+.clear-right {
+clear:right;
+}
+.float-right {
+float:right;
+}
+
+
+h1, h2, h3 {
+    font-family: Arial, Helvetica, sans-serif;
+color: #555555;
+    font-size: 18;
+}
+div, table,label, input, button, select, textarea {
+font-family: Arial, Helvetica, sans-serif;
+    font-size: 12;
+    color: #333333;
+}
+a {
+color: #808080;
+}
+#boutons_supplementaires {
+position: absolute;
+right: 15px;
+margin: 3px 3% 0 0;
+z-index: 1;
+}
+.corps .widget-header {
+padding: 8px;
+color: #999999;
+background-color: #f5f5f5; 
+}
+.voir-aussi ul {
+list-style: none;
+}
+.voir-aussi a {
+text-decoration: underline;
+}
+
+
+/* correction des styles CSS de HAL : */
+.row .row {
+margin-left:0;
+margin-right:0;
+}
+.text-center {
+margin: auto;
+}
+.widget {
+margin: 0px 0 20px 0;
+width:100%;
+}
+.widget-content,
+.widget-content > div {
+width:100% !important;
+}
+.widget svg {
+overflow:hidden;
+height:100%;
+}
+.graphique-evolution .widget-content {
+padding: 0px 0px 8px;
+}
+.graphique-evolution .widget-content div {
+margin: auto;
+}
+.graphique-evolution .widget-content div[dir=ltr] {
+width:100% !important;
+}
+.graphique-distribution .widget-content {
+padding: 0;
+}
+.graphique-evolution .widget-content svg {
+width: 100%;
+}
+/* fin des corrections */
+
+.keword-2 {
+display:none;
+}
+
+/* surcharge de la charte graphique par defaut de HAL : */
+.pagination > .active > a, .pagination > .active > span, .pagination > .active > a:hover, .pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {
+background-color: #8E1a1E;
+border-color: #8E1a1E;
+}
+div.corps .btn-primary,
+.btn-default[data-original-title],
+div.corps td > .btn-default,
+div.corps td > .btn-default:hover,
+div.corps td > .btn-default:active {
+color: #999999;
+background-color: #f5f5f5;
+border-color: #cccccc;
+}
+.btn-default[data-original-title]:hover,
+.btn-default[data-original-title]:active,
+div.corps td > .btn-default:hover,
+div.corps td > .btn-default:active {
+text-decoration:underline;
+}
+.btn-primary[data-original-title=Documents],
+.btn-info[data-original-title=Annexes],
+.btn-default[data-original-title=Notices],
+div.corps td > .btn-primary,
+div.corps td > .btn-info,
+div.corps td:not(:last-child) > .btn-default {
+border-color: #CCCCCC;
+background-color: inherit;
+color: #808080;
+}
+.btn-primary[data-original-title=Documents]:hover,
+.btn-info[data-original-title=Annexes]:hover,
+.btn-default[data-original-title=Notices]:hover,
+.btn-primary[data-original-title=Documents]:active,
+.btn-info[data-original-title=Annexes]:active,
+.btn-default[data-original-title=Notices]:active,
+div.corps td > .btn-primary:hover,
+div.corps td > .btn-info:hover,
+div.corps td:not(:last-child) > .btn-default:hover,
+div.corps td > .btn-primary:active,
+div.corps td > .btn-info:active,
+div.corps td:not(:last-child) > .btn-default:active {
+border-color: #CCCCCC;
+background-color: inherit;
+color:black;
+text-decoration:none;
+}
+div#bcl-structures .btn-primary,
+#liste_membres_BCL .btn-primary
+ {
+color: #ffffff;
+background-color: #428bca;
+border-color: #357ebd;
+}
+div#bcl-structures .btn-default:hover,
+div#bcl-structures .btn-default:focus,
+#liste_membres_BCL .btn-default:hover,
+#liste_membres_BCL .btn-default:focus {
+color: #333333;
+background-color: #ebebeb;
+border-color: #adadad;
+}
+div#bcl-structures .btn-primary:hover,
+div#bcl-structures .btn-primary:focus,
+#liste_membres_BCL .btn-primary:hover,
+#liste_membres_BCL .btn-primary:focus {
+color: #ffffff;
+background-color: #3276b1;
+border-color: #285e8e;
+}
+div#bcl-structures a:hover,
+#liste_membres_BCL a:focus {
+text-decoration:underline;
+}
+/* fin de la surcharge de la charte graphique de HAL */
+
+
+/* export bibliographie : */
+#myidhal a,
+#mybiblio-requirements a,
+#tricks a {
+text-decoration: underline;
+}
+#mybiblio-requirements.loading {
+background: url(https://hal.archives-ouvertes.fr/BCL/public/loading_96_32.gif) no-repeat 0% 50%;
+padding-left: 106px;
+min-height: 64px;
+}
+#continue-anyway:hover {
+text-decoration: underline;
+}
+#flash-messages .mybiblio.alert-warning {
+background-image: url(https://hal.archives-ouvertes.fr/BCL/public/warning_64.gif);
+background-repeat: no-repeat;
+background-position: 10px 50%;
+min-height: 64px;
+padding-left: 84px;
+}
+#mybiblio-requirements.alert-danger {
+background-image: url(https://hal.archives-ouvertes.fr/BCL/public/interdit.png);
+background-repeat: no-repeat;
+background-position: 10px 50%;
+min-height: 80px;
+padding-left: 84px;
+}
+
+#myidhal {
+color: gray;
+}
+#myidhal .btn,
+#mybiblio-requirements .btn,
+#tricks .btn {
+text-decoration: none;
+}
+#myidhal .btn-sm,
+#mybiblio-requirements .btn-sm,
+#tricks .btn-sm {
+margin: 0.15em 0.25em;
+padding: 0.15em 0.5em;
+font-size: inherit;
+}
+#mybiblio-requirements .btn-primary,
+#tricks .btn-primary {
+color: #ffffff;
+background-color: #428bca;
+border-color: #357ebd;
+}
+#myidhal .btn-primary,
+#mybiblio-requirements .btn-primary,
+#tricks .btn-primary {
+color: #ffffff;
+background-color: #428bca;
+border-color: #357ebd;
+}
+#myidhal .btn-primary:hover,
+#mybiblio-requirements .btn-primary:hover,
+#tricks .btn-primary:hover {
+color: #ffffff;
+background-color: #3276b1;
+border-color: #285e8e;
+}
+#mybiblio-requirements p {
+padding-bottom: 2em;
+vertical-align: bottom;
+}
+#mybiblio-requirements .btn-group {
+padding: 8px 7px 16px;
+}
+#mybiblio-requirements .btn-group.loading {
+background: url(https://hal.archives-ouvertes.fr/BCL/public/loading_32.gif) no-repeat 8px 50%;
+padding-left: 48px;
+height: 52px; /* min-height doesn't work on table cells */
+}
+#pubs_as_author,
+#pubs_as_editor,
+#pubs_as_seriesEditor {
+display:table-row;
+}
+#pubs_as_author p,
+#pubs_as_author .btn-group,
+#pubs_as_editor p,
+#pubs_as_editor .btn-group,
+#pubs_as_seriesEditor p,
+#pubs_as_seriesEditor .btn-group {
+display:table-cell;
+text-align: right;
+}
+#mybiblio-requirements p:last-child {
+text-align: left;
+padding-left: 0.5em;
+height: 40px; /* min-height doesn't work on table cells */
+}
+
+#tricks {
+margin: 5% 0;
+}
+
+/* tableau formes auteurs des membres de BCL : */
+table#liste_membres_BCL {
+border-collapse: collapse;
+border:1px solid black;
+}
+table#liste_membres_BCL tr.parti {
+background:lightgrey;
+}
+table#liste_membres_BCL th {
+padding: 5px 5px;
+border-bottom:1px solid black;
+}
+table#liste_membres_BCL td {
+padding: 2px 5px;
+border-bottom:1px solid #cccccc;
+}
+table#liste_membres_BCL td:nth-child(3) {
+text-align: right;
+padding-right: 15px;
+}
+table#liste_membres_BCL td:nth-child(3) .pull-right {
+position:relative;
+right:-5px;
+}
+table#liste_membres_BCL tr td.inconnu {
+background-color: red;
+}
+table#liste_membres_BCL tr.idhal-manquant td:not(:first-child) {
+background-color: orange;
+}
+
+
+/* arborescence du référentiel structures : */
+div#bcl-structures blockquote {
+border: 5px solid #eeeeee;
+cursor: pointer;
+}
+div#bcl-structures blockquote.statut-INCOMING {
+border: 5px solid red !important;
+}
+div#bcl-structures blockquote.statut-VALID {
+border: 5px solid #dff0d8;
+}
+div#bcl-structures blockquote.statut-OLD {
+border: 5px solid #f7e199;
+}
+div#bcl-structures blockquote:hover,
+div#bcl-structures .structure-element-researchteam:hover {
+background-color: #d9edf7;
+    /* border-color: #bce8f1; */
+}
+div#bcl-structures .structure-element-researchteam:hover h6 {
+    color: #31708f;
+}
+div#bcl-structures .structure-element-department:hover {
+ background-color: #dff0d8;
+    /* border-color: #d6e9c6; */
+}
+div#bcl-structures .structure-element-department:hover h6 {
+    color: #3c763d;
+}
+div#bcl-structures .structure-element-laboratory:hover {
+background-color: #fcf8e3;
+    /* border-color: #faebcc; */
+}
+div#bcl-structures .structure-element-laboratory:hover h6 {
+    color: #8a6d3b;
+}
+div#bcl-structures .structure-element-institution:hover {
+background-color: #f2dede;
+    /* border-color: #ebccd1; */
+}
+div#bcl-structures .structure-element-institution:hover h6 {
+    color: #a94442;
+}
+div#bcl-structures .badge {
+margin-left:5px;
+}
+div#bcl-structures .bounds {
+content: " ";
+text-align: right;
+height: 40px;
+right: 0px;
+padding-right: 0px; 
+padding-left : 0px;
+margin-left  : 0px; 
+margin-right : 0px;
+}
+div#bcl-structures .b_vertical {
+position: absolute;
+border-left: 3px solid rgb(51, 51, 51); 
+left: 30px;
+}
+div#bcl-structures .b_horizontal {
+position: absolute;
+border-bottom: 3px solid rgb(51, 51, 51);
+left: 30px;
+}
+div#bcl-structures .arrow {
+top: 30px; 
+font-size: 9px;
+}
+div#bcl-structures .code {
+position: absolute; 
+top: 30px;
+}
+div#bcl-structures div.boutons_supplementaires {
+float:right;
+}
+/* fin de l'arborescence du référentiel structures */
+
+
+.footer {
+background-color:#820e12;
+height: initial;
+width: 100%
+}
+.footer ul {
+margin: 0 auto;
+}
+.footer ul {
+text-align: center;
+padding: 1% 0 2% 0;
+}
+.footer li {
+display: inline;
+margin: 0 1% 0 1%;
+padding: 0 3% 0 0;
+border-right: solid 1px #fff;
+}
+.footer li:last-child {
+border: none;
+}
+.footer li a {
+font-family: "OpenSansBold", Arial, Helvetica, sans-serif;
+text-transform: uppercase;
+font-size: 1em;
+color: #fff;
+font-weight: 800;
+}

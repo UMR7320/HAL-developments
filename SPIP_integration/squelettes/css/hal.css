@@ -1,0 +1,281 @@
+
+/* inspiré de styles_publicationsHAL.css mais en reprenant certaines choses de VisuGen.css et de Visu???.css */
+/* cf. les HAL tools développés à l'INRIA : https://haltools.archives-ouvertes.fr/?action=export&lang=fr */
+
+#res_script p, #res_script dl, #res_script dt, #res_script dd, #res_script .Titre a   {
+	color: #333;
+}
+#res_script .Rubrique{
+    font-size:1.7em;
+	color:#446;
+	letter-spacing:2px;
+	font-weight:bold;
+	background:#CCC;
+	text-align:left;
+	border-bottom:1px solid #CCC;
+	padding: 3px 0px 2px 10px;
+	margin-top: 5px;
+	margin-bottom: 12px;
+}
+#res_script .SousRubrique {
+    font-weight:bold;
+    font-size:1.2em;
+    margin:1.5em 0;
+    padding-left:12px;
+    color: #363842;
+}
+#res_script dl{
+    clear:both;
+    padding-bottom: 0.5em;
+    margin-bottom: 0.5em;
+    padding-right: 3px;
+    overflow:hidden;
+}
+#res_script dt{
+    display:none;
+}
+#res_script dd{
+    margin-left: 0;
+}
+#res_script .Debut_du_resume span {
+	display: none;
+}
+#res_script .Debut_du_resume:after {
+	content: '(...)';
+}
+
+/* quand il y a affichage de vignette */
+#res_script .Vignette{
+  float: left;
+  clear:left;
+  position:relative;
+}
+#res_script .Vignette img {
+    position: absolute;
+}
+#res_script .Vignette img,
+#pageseconde #texte_gauche .vignette img.VignetteImg {
+    background:none repeat scroll 0 0 #FFFFFF;
+    border:1px solid #CCCCCC;
+}
+
+#res_script .NoticeResAvecVignette {
+	border: 0;
+	padding-bottom: 0.5em;
+}
+
+#res_script .ChampResAvecVignette {
+	width: 15%;
+	color:#58529F;
+	font-weight:bold;
+	padding: 0em;
+}
+#res_script .Detail{
+    margin-bottom:0.5em;
+}
+#res_script .Fichier_joint a{
+    text-decoration:none;
+    padding:0 0.5em 0 0;
+    display:none;
+}
+
+/* Largeur des vignettes (attention penser à modifier les TROIS paragraphes) : */ 
+
+#pageseconde #texte_gauche #res_script .Vignette img,  /* ici je suis oblige de prefixer #pageseconde #texte_gauche car kitcnrs-5.3/css/charte-2/charte.css utilse des id plutôt que des classes pour définir le style de base par défaut (c'est pas malin !) */
+#pageseconde #texte_gauche .vignette img.VignetteImg {
+    max-width: 80px;
+}
+#pageseconde #texte_gauche #res_script dl.NoticeResAvecVignette {
+	min-height: 114px; /* on part du principe que les thèses sont au format A4, donc si 80px de large alors 114px de haut */
+	/* (ce min-height est requis car la .Vignette img est sortie du flux, via un position:absolute, afin d'obtenir le layout voulu) */
+}
+#res_script .ChampResAvecVignette,
+#res_script .ValeurResAvecVignette,
+#texte_gauche #res_script .Titre a {
+	margin-left:91px;
+	margin-bottom: 0em;
+	margin-top: 0em; 
+}
+
+/* pour les theses uniquement : */
+
+#texte_gauche #res_script dl {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	/* NB: pour les navigateurs qui ne supporte pas le flex layout, on a prévu une graceful degradation à base de floats */
+}
+#texte_gauche #res_script .Vignette {
+	order:1;
+}
+
+#texte_gauche #res_script .Auteurs {
+	order:2;
+	display: inline-block;
+	float:left;
+}
+#texte_gauche #res_script .Titre {
+	order:4;
+	display: inline-block;
+	float:left;
+	/* bidouille pour eviter un bug sur les titres de these trop courts (moins d'une ligne) : */
+	width: 100%; margin-left:0; padding-left: 0;
+}
+#texte_gauche #res_script .Titre a {
+	display:block;
+	/* bidouille pour eviter un bug sur les titres de these trop courts (moins d'une ligne),
+	  SUITE ET FIN */
+}
+#texte_gauche #res_script .annee_publi {
+	order:3;
+	display: inline-block;
+	margin-left: 10px;
+	float: left;
+	position: absolute;
+}
+#texte_gauche #res_script .Identifiant {
+	order:6;
+	text-align: right;
+	width: 100%;
+	margin-left: 0;
+}
+#texte_gauche #res_script dd.resume, /* dd nécessaire pour ne pas confondre la classe .resume de HAL avec la classe .resume du Kit CNRS */
+#texte_gauche #res_script .Debut_du_resume {
+	order:5;
+	clear:both;
+}
+#texte_gauche #res_script .Fichier_joint {
+	order:7;
+}
+#texte_gauche #res_script .SousRubrique {
+	display: none;
+}
+#texte_gauche #res_script dd.article {
+	visibility: hidden;
+	position: relative;
+	font-size: 0px;
+}
+#texte_gauche #res_script dd.article a {
+	visibility: visible;
+	display: block;
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	font-size: 8pt;
+	white-space: nowrap;
+}
+
+/* pour le volet de droite uniquement : */
+
+#texte_droite .critere_auteur_HAL {
+    color:#820E12;
+	font-size:0.7rem;
+    font-style: italic;
+}
+
+#texte_droite #res_script {
+	background:none;
+}
+#texte_droite #res_script .Fichier_joint,
+#texte_droite #res_script .LienBibtex {
+	display:none;
+}
+#texte_droite #res_script .Titre{
+    font-weight:bold;
+    color:black;
+    margin-bottom:0.5em;
+}
+#texte_droite #res_script .Auteurs{
+    /* float:left; */
+    color:#7F7B7A;
+    margin-bottom:0;
+    font-size:0.7rem;
+}
+#texte_droite #res_script .annee_publi{
+	text-align:right;
+	font-size:0.6rem;
+	margin-right: 5px;
+}
+#texte_droite #res_script .Rubrique,
+#texte_droite #res_script .SousRubrique{
+	padding-left: 0;
+}
+#texte_droite #res_script dd.resume, /* dd nécessaire pour ne pas confondre la classe .resume de HAL avec la classe .resume du Kit CNRS */
+#texte_droite #res_script .Debut_du_resume {
+	display: none;
+}
+#texte_droite #res_script dd.Vignette {
+	display: none;
+}
+#texte_droite #res_script .ChampResAvecVignette,
+#texte_droite #res_script .ValeurResAvecVignette {
+	margin-left:inherit;
+}
+#texte_droite #res_script .Type_de_document:before {
+	content: '(';
+}
+#texte_droite #res_script .Type_de_document:after {
+	content: ')';
+}
+#texte_droite #res_script .Type_de_document,
+#texte_droite #res_script .article {
+	font-size: 0.7rem;
+	display: none;
+}
+
+/* pour la prévisualisation dans mediabox : */
+#hal_preview,
+#hal_preview .vignette {
+	height: 100%;
+}
+#hal_preview .vignette img {
+	max-height: 95%;
+	max-width: 100%;
+	width: auto;
+	background: white;
+	margin-bottom: 1em;
+}
+#hal_preview aside {
+	float:right;
+	max-width: 33%;
+	overflow:hidden;
+}
+#hal_preview .titre {
+	font-size: 1.5rem;
+	margin-bottom: 0.5em;
+}
+#hal_preview .type_pub {
+	font-style: italic;
+	color: grey;
+	font-size: 0.8rem;
+	margin: 1em;
+}
+#hal_preview .abstract {
+	text-align: justify;
+	margin-right: 1em;
+	margin-bottom: 1em;
+}
+#hal_preview .auteurs {
+	font-weight: bold;
+}
+#hal_preview .auteurs,
+#hal_preview .annee,
+#hal_preview .revue {
+	display: inline;
+}
+#hal_preview .annee:before,
+#hal_preview .revue:before {
+	content: ', ';
+}
+#cboxTitle a {
+	color: blue;
+	text-decoration: underline;
+}
+#cboxTitle .logo.hal {
+	position: relative;
+	top: 10px;
+	margin-right: 6px;
+}
+#cboxLoadedContent .spip-admin-float {
+	display: none;
+}

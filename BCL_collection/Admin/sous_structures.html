@@ -1,0 +1,30 @@
+<!-- ATTENTION: avant de faire le copier/coller dans HAL, descendre jusqu'au premier <p> et supprimer tout ce qui se trouve avant (il faut virer tout le <head>)
+
+Le but des quelques lignes ci-dessous est simplement de mimer la structure du site HAL pour que l'on puisse prévisualiser le rendu (et debugger le javascript) dans un navigateur web.
+
+<html>
+<head>
+<link rel="stylesheet" href="http://static.ccsd.cnrs.fr/v3/css/bootstrap.css" type="text/css" media="screen">
+<link rel="stylesheet" href="http://static.ccsd.cnrs.fr/css/ccsd.css" type="text/css" media="screen">
+<link rel="stylesheet" href="http://aurehal.archives-ouvertes.fr/css/hal.css" type="text/css" media="screen">
+<link rel="stylesheet" href="http://aurehal.archives-ouvertes.fr/css/aurehal.css" type="text/css" media="screen">
+<link href="https://hal.archives-ouvertes.fr/BCL/public/style.css" rel="stylesheet" type="text/css" >
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script src="https://hal.archives-ouvertes.fr/BCL/public/collection_hal.js"></script>
+</head>
+<body style="background:white; margin: 20px;">
+
+<!-- copier/coller dans HAL le code ci-dessous : -->
+
+<div id="bcl-structures">Vous devez activer javascript dans votre navigateur internet puis recharger cette page.</div>
+<script>// <![CDATA[	
+	var use_lang="en";
+	$("#bcl-structures").html("Recherche en cours...");
+	getStructures("(acronym_t:BCL+OR+parentAcronym_t:BCL+OR+code_s:(UMR7320+OR+UMR6039)+OR+name_t:(Bases+Corpus+Langage)+OR+parentName_t:(Bases+Corpus+Langage))", function(raw_data, structures_index, structures_tree, original_query) {
+		$("#bcl-structures").html("<div class='structure-arborescence'>"+writeStructures(structures_tree, 0, use_lang)+"</div>");		
+	}, function(errno, original_query) {		
+		$("#bcl-structures").html("Une erreur s'est produite.");
+	});
+// ]]></script>
+</body>
+</html>
