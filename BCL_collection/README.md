@@ -2,25 +2,25 @@
 
 # Résumé #
 
-Ce dossier contient tous les fichiers utilisés par la Collection HAL du laboratoire BCL : https://hal.archives-ouvertes.fr/BCL/
+Ce dossier contient tous les fichiers utilisés par la [Collection HAL du laboratoire BCL](https://hal.archives-ouvertes.fr/BCL/)
 
 # Dépendances #
 
-Ces fichiers sont prévus pour être utilisés sur une Collection de la plateforme HAL (https://hal.archives-ouvertes.fr).
+Ces fichiers sont prévus pour être utilisés sur une Collection de la plateforme [HAL](https://hal.archives-ouvertes.fr).
 
-Certains de ces codes javascript utilisent la librairie Lazy.js (http://danieltao.com/lazy.js/) ; celle-ci est donc fournie dans le sous-dossier Ressources/, mais vous pourrez éventuellement la remplacer par une version plus récente si nécessaire.
+Certains de ces codes javascript utilisent la librairie [Lazy.js](http://danieltao.com/lazy.js/) ; celle-ci est donc fournie dans le sous-dossier Ressources/, mais vous pourrez éventuellement la remplacer par une version plus récente si nécessaire.
 
 La librairie Jquery est également utilisée, mais on utilise ici celle qui est en principe fournie par la plateforme HAL.
 
 # Contenu #
 
-Admin: fonctionnalités d'administration à destination des gestionnaires de collection (gestion des formes auteurs en doublon, sans idhal, parti du labo, etc. ; et gestion des sous-structures, comme par ex. les équipes de recherche, validées, fermées, ou saisies manuellement avec potentiellement des doublons)
+- **Admin** : fonctionnalités d'administration à destination des gestionnaires de collection (gestion des formes auteurs en doublon, sans idhal, parti du labo, etc. ; et gestion des sous-structures, comme par ex. les équipes de recherche, validées, fermées, ou saisies manuellement avec potentiellement des doublons)
 
-Export: fonctionnalités d'exportation bibliographique à destination des chercheurs
+- **Export** : fonctionnalités d'exportation bibliographique à destination des chercheurs
 
-Homepage: exemple de page d'accueil d'une collection HAL
+- **Homepage** : exemple de page d'accueil d'une collection HAL
 
-Ressources: fichiers javascript et images utilisés par les 3 répertoires mentionnés ci-dessus.
+- **Ressources** : fichiers javascript et images utilisés par les 3 répertoires mentionnés ci-dessus.
 
 Arborescence des menus.pdf : exemple de menu d'une collection HAL, qui implémente toutes les fonctionnalités mentionnées ci-dessus.
 
@@ -28,7 +28,7 @@ Arborescence des menus.pdf : exemple de menu d'une collection HAL, qui implémen
 
 1. Les fichiers contenus dans le dossier Ressources/ doivent être uploadés manuellement, un par un, sur votre Collection HAL, par le biais du menu Privileges > Site Web > Ressources (accessible uniquement aux personnes qui sont gestionnaires de la collection). Notamment et surtout le fichier collection_hal.js qui contient toutes les primitives javascript permettant de travailler sur les données de la collection (ainsi que le fichier lazy.js qui contient une bibliothèque javascript requise pour le bon fonctionnement de collection_hal.js).
 
-2. Pour que le javascript contenu dans collection_hal.js soit bien chargé et executé sur chaque page de la collection HAL, nous allons avoir recours à une astuce, qui consiste à injecter une balise <script> dans le bandeau situé en haut de la page web, qui contient le nom de la collection. Pour cela, on passe par le biais du menu Privileges > Site Web > En-tête > ajouter un élément de type texte, qui va contenir dans le champ "libellé" uniquement cette balise <script>...</script> (y copier/coller la balise script contenue dans le fichier header.html ci-joint). Oui, c'est sale, mais ça fonctionne :-)
+2. Pour que le javascript contenu dans collection_hal.js soit bien chargé et executé sur chaque page de la collection HAL, nous allons avoir recours à une astuce, qui consiste à injecter une balise `<script>` dans le bandeau situé en haut de la page web, qui contient le nom de la collection. Pour cela, on passe par le biais du menu Privileges > Site Web > En-tête > ajouter un élément de type texte, qui va contenir dans le champ "libellé" uniquement cette balise `<script>...</script>` (y copier/coller la balise script contenue dans le fichier header.html ci-joint). Oui, c'est sale, mais ça fonctionne :-)
 
 3. (facultatif) Le dossier Homepage contient le code source pour personnaliser la page d'accueil de la collection (un fichier par langue), de manière à avoir une page qui soit "responsive design" (utilisation du système à 12 colonnes). Pour ce faire, une fois authentifié, on se rend sur la page d'accueil de la collection, et tout en bas il y a un bouton "Modifier le contenu de cette page". Il faut alors copier/coller le contenu de chacun de ces fichiers homepage-*.html  pour chacune des langues gérées par votre collection HAL (français, anglais, voire espagnol).
 
@@ -36,9 +36,9 @@ Arborescence des menus.pdf : exemple de menu d'une collection HAL, qui implémen
 
 5. Toujours en ce qui concerne l'esthétique, la feuille de style CSS est personnalisée par le biais du menu Privileges > Site Web > Apparence. Il faut ici copier/coller le contenu du fichier style.css. 
 
-ATTENTION: à la ligne 127, il y a un li:last-child {display:none} qui est destiné à masquer le dernier onglet du menu de la collection lorsque le menu contient un nombre d'onglets pairs. L'idée étant de mettre dans un dernier onglet du menu de la collection HAL des fonctions supplémentaires destinées au gestionnaire de la collection pour l'aider à administrer la collection HAL. Ainsi, lorsque le gestionnaire de collection s'est authentifié, un dernier onglet "Privileges" apparaît (rajouté automatiquement par la plateforme HAL), et son apparition entraîne également dans la foulée l'apparition de cet onglet d'adminitration. Et lorsque l'onglet "Privileges" est absent, l'onglet d'administration est caché.
+**ATTENTION**: à la ligne 127, il y a un `li:last-child {display:none}` qui est destiné à masquer le dernier onglet du menu de la collection lorsque le menu contient un nombre d'onglets pairs. L'idée étant de mettre dans un dernier onglet du menu de la collection HAL des fonctions supplémentaires destinées au gestionnaire de la collection pour l'aider à administrer la collection HAL. Ainsi, lorsque le gestionnaire de collection s'est authentifié, un dernier onglet "Privileges" apparaît (rajouté automatiquement par la plateforme HAL), et son apparition entraîne également dans la foulée l'apparition de cet onglet d'adminitration. Et lorsque l'onglet "Privileges" est absent, l'onglet d'administration est caché.
 
-Par conséquent, si votre menu contient un nombre d'onglets pairs (en comptant tous les onglets y compris l'onglet "privileges"), il vous faudra remplacer ici nth-child(even) par nth-child(odd) et vice versa (2 occurrences à modifier). Et si vous faites le choix de ne pas mettre d'onglet d'administration à destination des gestionnaires de collection, dans ce cas il faut juste supprimer cette ligne "display:none".
+Par conséquent, si votre menu contient un nombre d'onglets pairs (en comptant tous les onglets y compris l'onglet "privileges"), il vous faudra remplacer ici `nth-child(even)` par `nth-child(odd)` et vice versa (2 occurrences à modifier). Et si vous faites le choix de ne pas mettre d'onglet d'administration à destination des gestionnaires de collection, dans ce cas il faut juste supprimer cette ligne "display:none".
 
 6. Les dossiers Admin et Export contiennent des fonctionnalités supplémentaires (cf. rubrique "contenu" ci-dessus). Si vous souhaitez les activer, il vous faudra, pour chacun de ces fichiers HTML, créer une nouvelle page web (par le biais du menu Privileges > Site Web > Menu > ajouter une page personnalisable), puis ensuite se rendre sur cette page web, et cliquer, tout en bas, sur "modifier le contenu de la page". Il faudra ensuite copier/coller ici le contenu du fichier HTML fourni autant de fois que vous avez de langues gérées par votre collection HAL (français, anglais, voire espagnol).
 
