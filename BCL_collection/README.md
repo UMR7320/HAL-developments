@@ -44,3 +44,10 @@ Par conséquent, si votre menu contient un nombre d'onglets pairs (en comptant t
 
 Le fichier `Arborescence des menus.pdf` ci-joint donne un exemple de ce que l'on peut obtenir au final, avec ce fameux onglet d'administration à destination des gestionnaires de collection.
 
+# En cas de difficultés #
+
+Veuillez consultez la FAQ sur le [wiki](https://github.com/UMR7320/HAL-developments/wiki)
+
+# Documentation du code source #
+
+Veuillez consultez le [wiki](https://github.com/UMR7320/HAL-developments/wiki)
