@@ -1,0 +1,57 @@
+<!-- ATTENTION: avant de faire le copier/coller dans HAL, descendre jusqu'au premier <div> et supprimer tout ce qui se trouve avant (il faut virer tout le <head>)
+
+Le but des quelques lignes ci-dessous est simplement de mimer la structure du site HAL pour que l'on puisse prévisualiser le rendu (et debugger le javascript) dans un navigateur web.
+
+
+<html lang='fr'>
+<head>
+<meta charset="UTF-8">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script src="https://hal.archives-ouvertes.fr/BCL/public/collection_hal.js"></script>
+<style> #continue-anyway {float: right;} </style>
+</head>
+<body>
+
+<!-- copier/coller dans HAL le code ci-dessous : -->
+
+<div class="form-group"><label for="date_debut">desde el año:</label> <input id="date_debut" type="text" value="2011" /> <label for="date_fin">hasta el año:</label> <input id="date_fin" type="text" /></div>
+<div class="checkbox"><label><input type="checkbox" value="452550" />Equipo Logom&eacute;trie</label></div>
+<div class="checkbox"><label><input type="checkbox" value="452546%20OR%20453016" />Equipo Dialectologie et Linguistique formelle (ex. DDP)</label></div>
+<div class="checkbox"><label><input type="checkbox" value="452549" />Equipo Langage et Cognition</label></div>
+<div class="checkbox"><label><input type="checkbox" value="452548" />Equipo Enonciation</label></div>
+<div class="btn-group"><button id="btn-flux" class="btn btn-success dropdown-toggle" type="button" data-toggle="dropdown"><span class="glyphicon glyphicon-export">&nbsp;</span>Download <span class="caret">&nbsp;</span></button>
+<ul class="dropdown-menu pull-right">
+<li><a id="dl_xml" class="btn btn-xs" title="Lista de publicaciones como autor (incl. directions d&rsquo;ouvrage), en formato XML-TEI" href="#">en formato XML-TEI</a></li>
+<li><a id="dl_bibtex" class="btn btn-xs" title="Lista de publicaciones como autor (incl. directions d&rsquo;ouvrage), en formato BibTeX" href="#">en formato BibTeX</a></li>
+<li><a id="dl_endnote" class="btn btn-xs" title="Lista de publicaciones como autor (incl. directions d&rsquo;ouvrage), en formato EndNote" href="#">en formato EndNote</a></li>
+<li><a id="dl_csv" class="btn btn-xs" title="Lista de publicaciones como autor (incl. directions d&rsquo;ouvrage), en formato CSV (Excel)" href="#">en formato CSV (Excel)</a></li>
+<li><a id="dl_html" class="btn btn-xs" title="Lista de publicaciones como autor (incl. directions d&rsquo;ouvrage), en formato HTML (Word)" href="#">en formato HTML (Word)</a></li>
+</ul>
+</div>
+<script>// <![CDATA[
+$("#btn-flux").click(function() { 
+var equipes = "*";
+var cases_cochees = [];
+$("input[type=checkbox]").each(function(index) {
+if ($(this).prop("checked"))
+cases_cochees.push($( this ).val());
+});
+if (cases_cochees.length > 0)
+equipes = cases_cochees.join("%20OR%20"); 
+var date_debut = $("#date_debut").val();
+var date_fin = $("#date_fin").val();
+if (date_debut < 1900 || date_debut > 2099)
+date_debut=1900;
+if (date_fin < 1900 || date_fin > 2099)
+date_fin=2099;
+var query="?q=(collCode_s:BCL)%20AND%20producedDate_tdate:["+date_debut+"-01-01T00:00:00Z%20TO%20"+date_fin+"-12-31T23:59:59Z]%20AND%20(structId_i:("+equipes+"))";
+$("#dl_xml").attr("href", "https://api.archives-ouvertes.fr/search/hal/"+query+"&amp;omitHeader=true&amp;defType=edismax&amp;rows=2000&amp;wt=xml-tei");
+$("#dl_endnote").attr("href", "https://api.archives-ouvertes.fr/search/hal/"+query+"&amp;omitHeader=true&amp;defType=edismax&amp;rows=2000&amp;wt=endnote");
+$("#dl_csv").attr("href", "https://api.archives-ouvertes.fr/search/hal/"+query+"&amp;omitHeader=true&amp;defType=edismax&amp;rows=2000&amp;wt=csv");
+$("#dl_bibtex").attr("href", "https://api.archives-ouvertes.fr/search/hal/"+query+"&amp;omitHeader=true&amp;defType=edismax&amp;rows=2000&amp;wt=bibtex");
+$("#dl_html").attr("href", "http://bcl.unice.fr/hal/biblio.php"+query+"&title=custom, "+date_debut+".."+date_fin);
+});
+// ]]></script>
+
+</body>
+</html>
