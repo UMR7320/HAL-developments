@@ -10,7 +10,7 @@ This is an example of smooth and aesthetic integration of HAL entries on an inst
 
 Those files are aimed to be used on top of the [Kit CNRS](http://kit-web.cnrs.fr/Harmoweb/) plugin for SPIP, and therefore the files inside the `squelettes/` folder follows the file hierarchy of this Kit CNRS, but you can easily adapt them if you have a bare SPIP CMS website without the Kit CNRS.
 
-They use the [spip_webpage_from_hal](https://github.com/Saga-UGA/spip_webpage_from_hal) plugin which was developped by Boris Morel (SAGA). The `plugins/` folder here provides a modified version of this plugin (for aesthetics and more flexibility, such as for the thumbnails).
+They use the [spip_webpage_from_hal](https://github.com/Saga-UGA/spip_webpage_from_hal) plugin which was developped by Boris Morel, from Université Grenoble Alpes (SAGA). The `plugins/` folder here provides a modified version of this plugin (for aesthetics and more flexibility, such as for the thumbnails).
 
 If you want to use the "preview" functionnality (not mandatory), you'll also need the [nivoslider-v2](https://plugins.spip.net/nivoslider.html) plugin for SPIP (which is also included with the Kit CNRS).
 

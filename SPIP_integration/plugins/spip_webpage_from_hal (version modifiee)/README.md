@@ -1,3 +1,5 @@
+***WARNING:*** this is a modified version of the spip_webpage_from_hal plugin, developped by Boris Morel, from Université Grenoble Alpes. The original version can be found [here](https://github.com/Saga-UGA/spip_webpage_from_hal). This version was modified for aesthetics and more flexibility (such as for the thumbnails).
+
 # Spip plugin to include an html list of publications from Hal directly in your website #
 
 ## How does it works ? ##
