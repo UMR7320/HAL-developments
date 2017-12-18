@@ -8,7 +8,7 @@ Ce dossier contient tous les fichiers utilisés par la [Collection HAL du labora
 
 Ces fichiers sont prévus pour être utilisés sur une Collection de la plateforme [HAL](https://hal.archives-ouvertes.fr).
 
-Certains de ces codes javascript utilisent la librairie [Lazy.js](http://danieltao.com/lazy.js/) ; celle-ci est donc fournie dans le sous-dossier Ressources/, mais vous pourrez éventuellement la remplacer par une version plus récente si nécessaire.
+Certains de ces codes javascript utilisent la librairie [Lazy.js](http://danieltao.com/lazy.js/) de Daniel Tao ; celle-ci est donc fournie dans le sous-dossier Ressources/, mais vous pourrez éventuellement la remplacer par une version plus récente si nécessaire.
 
 La librairie Jquery est également utilisée, mais on utilise ici celle qui est en principe fournie par la plateforme HAL.
 

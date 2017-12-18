@@ -1,0 +1,16 @@
+[(#REM) webpage_from_hal.html : récupère une liste de publications HAL au format HTML
+<template>
+<webpage_from_hal |size=medium|url="https://hal-unice.archives-ouvertes.fr/Public/afficheRequetePubli.php?typdoc=THESE&collection_exp=BCL&CB_auteur=oui&CB_titre=oui&CB_annee_publi=oui&CB_resume=oui&CB_Resume_court=oui&CB_vignette=oui&ordre_aff=AT&Fen=Aff&css=url_not_found/../css/VisuRubriqueEncadre.css">
+</template>
+	
+	url: permet de sélectionner quelles publications on veut récupérer de HAL
+	     cf. https://haltools.archives-ouvertes.fr/?action=export&lang=fr pour la doc pour generer ce genre d'URLs
+	size: permet de choisir la taille des vignettes (entre "thumb", "small", "medium", ou "large") / vaut "little" par défaut.
+	div_encapsulation: permet de spécifier si on veut que le code HTML retourné soit encadré - ou pas - par un <div id="res_script">...</div>
+	     (par défaut ce booléen vaut 1 mais vous pouvez avoir besoin de le passer à 0 si vous souhaitez utiliser le CSS flexbox layout model afin d'insérer au bon endroit - c.a.d. en tenant compte de l'ordre de tri - d'autres éléments non rapatriés de HAL (via la directive CSS order: xx;)
+	
+][(#REM) Modele
+<webpage_from_hal |url=https://hal-unice.archives-ouvertes.fr/Public/afficheRequetePubli.php?...> #MODELE{webpage_from_hal} Dans le
+corps d'un article ]
+
+[(#ENV{url}|hal_parse{#ENV{size, 'little'}, #ENV{div_encapsulation, 1}})]
