@@ -4,4 +4,5 @@
 .project
 .git-ftp-tmp
 .user.ini
+.htaccess
 ??/.gitignore
