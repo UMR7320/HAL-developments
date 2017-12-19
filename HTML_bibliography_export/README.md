@@ -15,6 +15,8 @@ Exemple d'URL : [biblio.php?title=BCL&q=(collCode_s:BCL)%20AND%20producedDate_td
 
 Si vous omettez de passer ce paramètre `q` et/ou ce paramètre `title`, la valeur par défaut qui sera utilisée par le script est celle indiquée dans l'exemple ci-dessus (mais libre à vous de modifier cela dans le script `biblio.php`, c'est très facile à faire)
 
+Le script `exportHAL.py` est appelé, en interne, par le script `biblio.php`. C'est lui qui effectue tout le travail à proprement parler : connexion à l'API de HAL, via une requête AJAX, pour récupérer la liste des dépôts et générer la biliographie au format HTML.
+
 # Utilisation depuis votre propre collection HAL #
 
 Ajoutez à votre collection HAL une nouvelle page de type `Lien web` (via le menu Privilèges > Site Web > Menu), et dans le champ `Lien`, indiquez l'adresse URL du script `biblio.php` accompagné des paramètres qui vous conviennent (en vous inspirant de l'exemple donné ci-dessus).
