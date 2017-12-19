@@ -1,0 +1,5 @@
+
+Each one of these tools are distributed under different open source licenses.
+
+Please refer to each individual file xxxx/LICENSE.txt (where xxx is the name of a subfolder) to know which open source license is used for a particular tool.
+
