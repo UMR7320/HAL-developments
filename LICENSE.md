@@ -1,7 +1,7 @@
 
 ***HAL developments of UMR7320 - Bases, Corpus, Langage***
 
-Copyright (c) 2017, Laboratoire BCL (UMR 7320, CNRS / Université Nice Sophia-Antipolis)
+Copyright (c) 2017, [Laboratoire BCL](https://bcl.cnrs.fr) (UMR 7320, CNRS / Université Nice Sophia-Antipolis)
 
 Each one of these tools are distributed under different open source licenses.
 
