@@ -8,7 +8,7 @@ Ces scripts permettent de générer un export au format HTML de la bibliographie
 
 Le script `biblio.php` reçoit une requête web, avec comme paramètres facultatifs (dans l'URL) : 
 
-- `q` : la requête (syntaxe Apache SOLR) à effectuer sur les serveurs de HAL pour rapatrier la bibliographier à exporter (cf. la [Documentation de l'API HAL](https://api.archives-ouvertes.fr/docs/search))
+- `q` : la requête (syntaxe Apache SOLR) à effectuer sur les serveurs de HAL pour rapatrier la bibliographier à exporter (cf. [Documentation de l'API HAL](https://api.archives-ouvertes.fr/docs/search))
 - `title` : le titre à afficher en début de document.
 
 Exemple d'URL : [biblio.php?title=BCL&q=(collCode_s:BCL)%20AND%20producedDate_tdate:[2011-01-01T00:00:00Z%20TO%202017-01-01T00:00:00Z]](http://bcl.unice.fr/hal/biblio.php?title=BCL&q=(collCode_s:BCL)%20AND%20producedDate_tdate:[2011-01-01T00:00:00Z%20TO%202017-01-01T00:00:00Z]) affichera la bibliographie issue de la collection HAL du laboratoire BCL, uniquement pour les années 2011 à 2017.
