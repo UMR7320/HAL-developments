@@ -35,11 +35,12 @@ function hal_parse($url, $size = null, $div_encapsulation = true) {
     $infos = parse_url($url);
     $ip = gethostbyname($infos['host']);
 
-    if ($ip != '193.48.96.10') {
+    /* this IP address check is too restrictive and not really important : 
+    if ($ip != '193.48.96.10' && $ip != '128.93.162.177') {
         spip_log("Url invalid", _LOG_ERREUR);
         
         return;
-    }
+    } */
 
     spip_log(sprintf("[hal_parse] init_http(%s)", $url), _LOG_DEBUG);
     $content = recuperer_page($url);
