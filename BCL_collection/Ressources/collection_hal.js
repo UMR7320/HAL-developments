@@ -183,12 +183,15 @@ function getFormesAuteurs(nom_collection, id_structures, callback_success, callb
 			  for (var i = 0; i < reponses.length; i+=2) {
 			    var rep = reponses[i]+'';
 			    rep = rep.split(/_FacetSep_|_JoinSep_/);
-			    var membre = (id_structures&&id_structures.length?false:true);
-			    for (var j = 0; j < id_structures.length; j++)
-			    	if (rep[0]==id_structures[j]) {
-			    		membre |= true;
-			    		break;
-			  		}
+			    var membre = true;
+			    if (id_structures && id_structures.length) {
+			    	membre = false;
+				    for (var j = 0; j < id_structures.length; j++)
+				    	if (rep[0]==id_structures[j]) {
+				    		membre |= true;
+				    		break;
+				  		}
+			    }
 			    if (membre)
 			    	liste.push({idhal: rep[2], name: rep[3], nb_depots: reponses[i+1]});
 			  }
