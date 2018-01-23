@@ -6,4 +6,6 @@
 .user.ini
 .htaccess
 .pydevproject
+post.passwd
+gest.passwd
 ??/.gitignore
