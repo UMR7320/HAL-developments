@@ -1,3 +1,19 @@
+<!-- ATTENTION: avant de faire le copier/coller dans HAL, descendre jusqu'au premier <div> et supprimer tout ce qui se trouve avant (il faut virer tout le <head>)
+
+Le but des quelques lignes ci-dessous est simplement de mimer la structure du site HAL pour que l'on puisse prévisualiser le rendu (et debugger le javascript) dans un navigateur web.
+
+
+<html lang='en'>
+<head>
+<meta charset="UTF-8">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script src="https://hal.archives-ouvertes.fr/BCL/public/collection_hal.js"></script>
+<style> #continue-anyway {float: right;} </style>
+</head>
+<body>
+
+<!-- copier/coller dans HAL le code ci-dessous : -->
+
 <div class="form-group"><label for="date_debut">from year:</label> <input id="date_debut" type="text" value="2011" /> <label for="date_fin">to year:</label> <input id="date_fin" type="text" /></div>
 <div class="checkbox"><label><input type="checkbox" value="452550" />Team Logom&eacute;trie</label></div>
 <div class="checkbox"><label><input type="checkbox" value="452546%20OR%20453016" />Team Dialectologie et Linguistique formelle (ex. DDP)</label></div>
@@ -7,7 +23,7 @@
 <ul class="dropdown-menu pull-right">
 <li><a id="dl_xml" class="btn btn-xs" title="Download list of publications as author (incl. directions d&rsquo;ouvrage), in XML-TEI format" href="#">in XML-TEI format</a></li>
 <li><a id="dl_bibtex" class="btn btn-xs" title="Download list of publications as author (incl. directions d&rsquo;ouvrage), in BibTeX format" href="#">in BibTeX format</a></li>
-<li><a id="dl_endnote" class="btn btn-xs" title="Download list of publications as author (incl. directions d&rsquo;ouvrage), in EndNote format" href="#">in EndNote format</a></li>
+<li><a id="dl_endnote" class="btn btn-xs" title="Download list of publications as author (incl. directions d&rsquo;ouvrage), in EndNote format" href="#">in EndNote format (or Zotero)</a></li>
 <li><a id="dl_csv" class="btn btn-xs" title="Download list of publications as author (incl. directions d&rsquo;ouvrage), in CSV (Excel) format" href="#">in CSV (Excel) format</a></li>
 <li><a id="dl_html" class="btn btn-xs" title="Download list of publications as author (incl. directions d&rsquo;ouvrage), in HTML (Word) format" href="#">in HTML (Word) format</a></li>
 </ul>
@@ -36,3 +52,6 @@ $("#dl_bibtex").attr("href", "https://api.archives-ouvertes.fr/search/hal/"+quer
 $("#dl_html").attr("href", "http://bcl.unice.fr/hal/biblio.php"+query+"&title=custom, "+date_debut+".."+date_fin);
 });
 // ]]></script>
+
+</body>
+</html>
