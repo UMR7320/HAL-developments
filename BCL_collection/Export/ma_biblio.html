@@ -106,7 +106,7 @@ function retrieve_bibliography(fullname, is_connected, available_formats, downlo
 	if (is_connected===undefined)
 		is_connected = ($(".navbar-fixed-top div.navbar-right > ul").length>0);
 	if (lang===undefined)
-		lang = $('html').attr("lang");
+		lang = getCurrentLanguage();
 	if (lang!="fr")
 		lang ="en";
 	if (available_formats===undefined)

@@ -110,8 +110,24 @@ function removeDiacritics (str) {
     return str.replace(/[\u0300-\u036F]/g, "");
 }
 
+function getCurrentLanguage(defaultLanguage) {
+	defaultLanguage = (typeof defaultLanguage === 'undefined') ? "fr" : defaultLanguage;
+	return (document.documentElement.lang ? document.documentElement.lang : defaultLanguage);
+}
+
 function getMembresBCL(callback_success, callback_error) {
 	return $.ajax("https://bcl.cnrs.fr/spip.php", {data: 'page=json&id_rubrique=2&membres&var_mode=calcul', dataType: 'json', jsonp: false, error: function() {		
+		callback_error(-1);
+	}, success: function( liste ) {
+	  callback_success(liste);
+	}});
+}
+
+// getHALUser() recherche un compte utilisateur HAL sur la base d'un critere de recherche
+// (nom, prénom, email, login, ou user_id)
+// Note: pour les recherches par nom+prénom, attention a bien utiliser l'ordre (et la syntaxe) "NOM prenom" (sinon le resultat ne sera pas garanti.), i.e. ne pas mettre d'accents, et mettre le nom de famille en premier.
+function getHALUser(critere, callback_success, callback_error) {
+	return $.ajax("https://hal.archives-ouvertes.fr/administrate/ajaxsearchuser", {data: 'term='+critere.replace(new RegExp("\\s+", 'g'), "+"), dataType: 'json', jsonp: false, error: function() {		
 		callback_error(-1);
 	}, success: function( liste ) {
 	  callback_success(liste);
@@ -170,13 +186,23 @@ function getIdHAL(nom_de_la_collection, full_name, callback_success, callback_er
 
 // Récupère la liste des formes auteurs d'une collection (ou d'un laboratoire possédant une collection)
 // Le parametre id_structures est facultatif : il s'agit d'un tableau d'identifiants de structures. S'il est présent, ne seront pris en compte que les formes auteurs affiliées à l'une de ces structures. Cela permet de filtrer les coauteurs qui ne sont pas membres de ce laboratoire. Ex : id_structures = [199944, 107319]
-function getFormesAuteurs(nom_collection, id_structures, callback_success, callback_error) {
-	return $.ajax("https://api.archives-ouvertes.fr/search/"+nom_collection, {data: 'q=*&rows=0&wt=json&facet=true&facet.field=structHasAuthIdHal_fs&facet.mincount=1&facet.limit=1000', dataType: 'json', jsonp: false, error: function() {		
+// le facet.limit sert à limiter les résultats retournés par l'API de HAL, 
+// mais sa valeur par défaut est bien trop basse (190 résultats, alors qu'on a ici besoin de l'exhaustivité des résultats). 
+// Nous l'avons donc surchargé avec une nouvelle valeur par défaut beaucoup plus élevée (9999). 
+// Si jamais cela ne suffit toujours pas, un warning sera généré et passé en second argument de callback_success. 
+// Vous devrez alors corriger le problème en passant dans le paramètre facet_limit une valeur supérieure à celle indiquée dans ce warning.
+function getFormesAuteurs(nom_collection, id_structures, callback_success, callback_error, facet_limit) {
+	facet_limit = (typeof facet_limit === 'undefined') ? 9999 : facet_limit;
+	return $.ajax("https://api.archives-ouvertes.fr/search/"+nom_collection, {data: 'q=*&rows=0&wt=json&facet=true&facet.field=structHasAuthIdHal_fs&facet.mincount=1&facet.limit='+facet_limit, dataType: 'json', jsonp: false, error: function() {		
 		callback_error(-2);
 	}, success: function( data ) {
 	  if (!data.facet_counts || !data.facet_counts.facet_fields || !data.facet_counts.facet_fields.structHasAuthIdHal_fs)
 	  		callback_error(-1,full_name); 
 	  else {
+	  	  var warnings = [];
+	  	  if (data.response.numFound && data.response.numFound >= facet_limit) {
+	  	    warnings.push({warning: "facet_limit", param: facet_limit});
+	  	  }
 		  var reponses = data.facet_counts.facet_fields.structHasAuthIdHal_fs;
 		  var liste = [];
 		  if (reponses !== undefined)
@@ -195,7 +221,7 @@ function getFormesAuteurs(nom_collection, id_structures, callback_success, callb
 			    if (membre)
 			    	liste.push({idhal: rep[2], name: rep[3], nb_depots: reponses[i+1]});
 			  }
-		  callback_success(liste);
+		  callback_success(liste, warnings);
 	  }
 	}});
 }
