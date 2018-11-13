@@ -440,10 +440,10 @@ aside.legende div {
 }
 
 /* tableau comptes utilisateur HAL : */
-td.bdd-labo {
+.bdd-labo {
 	background-color: lightgrey;
 }
-td.bdd-hal {
+.bdd-hal {
 	background-color: lightblue;
 }
 

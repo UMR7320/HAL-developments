@@ -8,8 +8,8 @@ $("body > div.navbar > div.navbar-collapse > div.navbar-right > ul > li > ul > l
 
 // personnalisation des _blank sur les liens hypertextes (une fois la page finie de charger) :
 $(function(){
-	$(".logo td:last-child a").attr("target","");
-	$("#container .sidebar-nav > ul > li:nth-last-child(2):not(.dropdown) > a").attr("target","_blank"); 
+    $(".logo td:last-child a").attr("target","");
+    $("#container .sidebar-nav > ul > li:nth-last-child(2):not(.dropdown) > a").attr("target","_blank"); 
 });
 
 // boite à outils :
@@ -111,77 +111,93 @@ function removeDiacritics (str) {
 }
 
 function getCurrentLanguage(defaultLanguage) {
-	defaultLanguage = (typeof defaultLanguage === 'undefined') ? "fr" : defaultLanguage;
-	return (document.documentElement.lang ? document.documentElement.lang : defaultLanguage);
+    defaultLanguage = (typeof defaultLanguage === 'undefined') ? "fr" : defaultLanguage;
+    return (document.documentElement.lang ? document.documentElement.lang : defaultLanguage);
 }
 
 function getMembresBCL(callback_success, callback_error) {
-	return $.ajax("https://bcl.cnrs.fr/spip.php", {data: 'page=json&id_rubrique=2&membres&var_mode=calcul', dataType: 'json', jsonp: false, error: function() {		
-		callback_error(-1);
-	}, success: function( liste ) {
-	  callback_success(liste);
-	}});
+    return $.ajax("https://bcl.cnrs.fr/spip.php", {data: 'page=json&id_rubrique=2&membres&var_mode=calcul', dataType: 'json', jsonp: false, error: function() {        
+        callback_error(-1);
+    }, success: function( liste ) {
+      callback_success(liste);
+    }});
 }
 
 // getHALUser() recherche un compte utilisateur HAL sur la base d'un critere de recherche
 // (nom, prénom, email, login, ou user_id)
 // Note: pour les recherches par nom+prénom, attention a bien utiliser l'ordre (et la syntaxe) "NOM prenom" (sinon le resultat ne sera pas garanti.), i.e. ne pas mettre d'accents, et mettre le nom de famille en premier.
 function getHALUser(critere, callback_success, callback_error) {
-	return $.ajax("https://hal.archives-ouvertes.fr/administrate/ajaxsearchuser", {data: 'term='+critere.replace(new RegExp("\\s+", 'g'), "+"), dataType: 'json', jsonp: false, error: function() {		
-		callback_error(-1);
-	}, success: function( liste ) {
-	  callback_success(liste);
-	}});
+    return $.ajax("https://hal.archives-ouvertes.fr/administrate/ajaxsearchuser", {data: 'term='+critere.replace(new RegExp("\\s+", 'g'), "+"), dataType: 'json', jsonp: false, error: function() {        
+        callback_error(-1);
+    }, success: function( liste ) {
+      var warnings = [];
+      liste.forEach(function (r) {
+          r.user_id=r.id;
+          delete r.id;
+          var fields = r.label.split(") - ");
+          if (fields.length > 1)
+            r.email=fields[fields.length-1];
+          fields = (fields.slice(0,-1).join(") - ")+")").match(new RegExp('^(.*)\\s+\\(([0-9]+)\\)\\s*$'));
+          if (fields) {
+            r.user_name = fields[1];
+            if (fields[2] != r.user_id) {
+              // Houston, we have a problem :-/
+              warnings.push({warning: "user_id_mistmatch", param: r.user_id, param2: fields[2]});
+            }
+          }
+      });
+      callback_success(liste, warnings);
+    }});
 }
 
 // Note: la fonction getIdHAL() essaye tout d'abord de trouver l'idHal demandé parmis les formes auteurs de la collection (liste qui inclut donc en toute logique tous les membres publiants du laboratoire).
 // En cas de réussite, la fonction callback_success ne retourne que l'idhal textuel (l'idhal numérique retourné est alors -1, et si on en a vraiment besoin, il faut refaire une deuxième requete AJAX dans la foulee pour le récuperer à partir de l'idhal textuel)
 // En cas d'échec, une nouvelle recherche est faite parmi toute la base de HAL, et s'il y a un et un seul idhal candidat, il est retourné, à la fois en textuel et en numérique.
 function getIdHAL(nom_de_la_collection, full_name, callback_success, callback_error) {
-	var full_name_sci=removeDiacritics(full_name.toLowerCase());
-	return $.ajax("https://api.archives-ouvertes.fr/search/"+nom_de_la_collection, {data: 'q=authFullName_t:'+encodeURIComponent(full_name_sci)+'&rows=0&wt=json&facet=true&facet.field=authFullNameIdHal_fs&facet.mincount=1&facet.limit=1000', dataType: 'json', jsonp: false, error: function() {
-		callback_error(-2,full_name);
-	}, success: function( d ) {
-	  if (!d.facet_counts || !d.facet_counts.facet_fields || !d.facet_counts.facet_fields.authFullNameIdHal_fs)
-		  callback_error(-1,full_name); 
-	  else {
-		  var reponses = d.facet_counts.facet_fields.authFullNameIdHal_fs;
-		  for (var i = 0; i < reponses.length; i++) {
-		    var rep = reponses[i]+'';
-		    rep = rep.split("_FacetSep_");
-		    if (full_name_sci == removeDiacritics(rep[0].toLowerCase())) {
-		    	callback_success(-1,rep[1],full_name);
-		    	return;
-		    }
-		  }
-		  // user not found => let's try outside of the collection :
-		  $.ajax("https://api.archives-ouvertes.fr/ref/author", {data: 'q=fullName_t:'+encodeURIComponent(full_name_sci)+'&wt=json&rows=2000&fl=docid,fullName_s,email_s,idHal_i,idHal_s,structureId_i,structure_s,valid_s&fq=idHal_i:(-0)&group=true&group.field=idHal_i&group.limit=200&sort=idHal_i+asc', dataType: 'json', jsonp: false, error: function() {
-				callback_error(-4,full_name);
-		  }, success: function( d ) {
-			  if (!d.grouped || !d.grouped.idHal_i || !d.grouped.idHal_i.groups || !d.grouped.idHal_i.groups.length)
-				  callback_error(-3,full_name); 
-			  else {
-				  var reponses = d.grouped.idHal_i.groups;
-				  var nbIdHAL = reponses.length;
-				  if (reponses[0].groupValue==0) {
-				  	nbIdHAL--; // let's ignore users without IdHals.
-				  }
-				  if (nbIdHAL>1) {
-				  	// several idHals (several people) with same name !
-				  	callback_error(-9,full_name); 
-				  	return;
-				  }
-				  if (nbIdHAL==1) {
-				  	callback_success(reponses[reponses.length-1].groupValue,reponses[reponses.length-1].doclist.docs[0].idHal_s,full_name);
-				  	return;
-				  }
-				  // else : nbIdHAL==0 && reponses.length==1 && reponses[0].groupValue==0
-				  // (only user(s) without IdHAL) => let's return 0 / empty string.
-				  callback_success(0,"",full_name);
-			  }
-		  }});
-	  }
-	}});
+    var full_name_sci=removeDiacritics(full_name.toLowerCase());
+    return $.ajax("https://api.archives-ouvertes.fr/search/"+nom_de_la_collection, {data: 'q=authFullName_t:'+encodeURIComponent(full_name_sci)+'&rows=0&wt=json&facet=true&facet.field=authFullNameIdHal_fs&facet.mincount=1&facet.limit=1000', dataType: 'json', jsonp: false, error: function() {
+        callback_error(-2,full_name);
+    }, success: function( d ) {
+      if (!d.facet_counts || !d.facet_counts.facet_fields || !d.facet_counts.facet_fields.authFullNameIdHal_fs)
+          callback_error(-1,full_name); 
+      else {
+          var reponses = d.facet_counts.facet_fields.authFullNameIdHal_fs;
+          for (var i = 0; i < reponses.length; i++) {
+            var rep = reponses[i]+'';
+            rep = rep.split("_FacetSep_");
+            if (full_name_sci == removeDiacritics(rep[0].toLowerCase())) {
+                callback_success(-1,rep[1],full_name);
+                return;
+            }
+          }
+          // user not found => let's try outside of the collection :
+          $.ajax("https://api.archives-ouvertes.fr/ref/author", {data: 'q=fullName_t:'+encodeURIComponent(full_name_sci)+'&wt=json&rows=2000&fl=docid,fullName_s,email_s,idHal_i,idHal_s,structureId_i,structure_s,valid_s&fq=idHal_i:(-0)&group=true&group.field=idHal_i&group.limit=200&sort=idHal_i+asc', dataType: 'json', jsonp: false, error: function() {
+                callback_error(-4,full_name);
+          }, success: function( d ) {
+              if (!d.grouped || !d.grouped.idHal_i || !d.grouped.idHal_i.groups || !d.grouped.idHal_i.groups.length)
+                  callback_error(-3,full_name); 
+              else {
+                  var reponses = d.grouped.idHal_i.groups;
+                  var nbIdHAL = reponses.length;
+                  if (reponses[0].groupValue==0) {
+                      nbIdHAL--; // let's ignore users without IdHals.
+                  }
+                  if (nbIdHAL>1) {
+                      // several idHals (several people) with same name !
+                      callback_error(-9,full_name); 
+                      return;
+                  }
+                  if (nbIdHAL==1) {
+                      callback_success(reponses[reponses.length-1].groupValue,reponses[reponses.length-1].doclist.docs[0].idHal_s,full_name);
+                      return;
+                  }
+                  // else : nbIdHAL==0 && reponses.length==1 && reponses[0].groupValue==0
+                  // (only user(s) without IdHAL) => let's return 0 / empty string.
+                  callback_success(0,"",full_name);
+              }
+          }});
+      }
+    }});
 }
 
 // Récupère la liste des formes auteurs d'une collection (ou d'un laboratoire possédant une collection)
@@ -192,38 +208,38 @@ function getIdHAL(nom_de_la_collection, full_name, callback_success, callback_er
 // Si jamais cela ne suffit toujours pas, un warning sera généré et passé en second argument de callback_success. 
 // Vous devrez alors corriger le problème en passant dans le paramètre facet_limit une valeur supérieure à celle indiquée dans ce warning.
 function getFormesAuteurs(nom_collection, id_structures, callback_success, callback_error, facet_limit) {
-	facet_limit = (typeof facet_limit === 'undefined') ? 9999 : facet_limit;
-	return $.ajax("https://api.archives-ouvertes.fr/search/"+nom_collection, {data: 'q=*&rows=0&wt=json&facet=true&facet.field=structHasAuthIdHal_fs&facet.mincount=1&facet.limit='+facet_limit, dataType: 'json', jsonp: false, error: function() {		
-		callback_error(-2);
-	}, success: function( data ) {
-	  if (!data.facet_counts || !data.facet_counts.facet_fields || !data.facet_counts.facet_fields.structHasAuthIdHal_fs)
-	  		callback_error(-1,full_name); 
-	  else {
-	  	  var warnings = [];
-	  	  if (data.response.numFound && data.response.numFound >= facet_limit) {
-	  	    warnings.push({warning: "facet_limit", param: facet_limit});
-	  	  }
-		  var reponses = data.facet_counts.facet_fields.structHasAuthIdHal_fs;
-		  var liste = [];
-		  if (reponses !== undefined)
-			  for (var i = 0; i < reponses.length; i+=2) {
-			    var rep = reponses[i]+'';
-			    rep = rep.split(/_FacetSep_|_JoinSep_/);
-			    var membre = true;
-			    if (id_structures && id_structures.length) {
-			    	membre = false;
-				    for (var j = 0; j < id_structures.length; j++)
-				    	if (rep[0]==id_structures[j]) {
-				    		membre |= true;
-				    		break;
-				  		}
-			    }
-			    if (membre)
-			    	liste.push({idhal: rep[2], name: rep[3], nb_depots: reponses[i+1]});
-			  }
-		  callback_success(liste, warnings);
-	  }
-	}});
+    facet_limit = (typeof facet_limit === 'undefined') ? 9999 : facet_limit;
+    return $.ajax("https://api.archives-ouvertes.fr/search/"+nom_collection, {data: 'q=*&rows=0&wt=json&facet=true&facet.field=structHasAuthIdHal_fs&facet.mincount=1&facet.limit='+facet_limit, dataType: 'json', jsonp: false, error: function() {        
+        callback_error(-2);
+    }, success: function( data ) {
+      if (!data.facet_counts || !data.facet_counts.facet_fields || !data.facet_counts.facet_fields.structHasAuthIdHal_fs)
+              callback_error(-1,full_name); 
+      else {
+            var warnings = [];
+            if (data.response.numFound && data.response.numFound >= facet_limit) {
+              warnings.push({warning: "facet_limit", param: facet_limit});
+            }
+          var reponses = data.facet_counts.facet_fields.structHasAuthIdHal_fs;
+          var liste = [];
+          if (reponses !== undefined)
+              for (var i = 0; i < reponses.length; i+=2) {
+                var rep = reponses[i]+'';
+                rep = rep.split(/_FacetSep_|_JoinSep_/);
+                var membre = true;
+                if (id_structures && id_structures.length) {
+                    membre = false;
+                    for (var j = 0; j < id_structures.length; j++)
+                        if (rep[0]==id_structures[j]) {
+                            membre |= true;
+                            break;
+                          }
+                }
+                if (membre)
+                    liste.push({idhal: rep[2], name: rep[3], nb_depots: reponses[i+1]});
+              }
+          callback_success(liste, warnings);
+      }
+    }});
 }
 
 // Retrieves firstname and lastname values from fullname
@@ -233,249 +249,249 @@ function getFormesAuteurs(nom_collection, id_structures, callback_success, callb
 // Unoptimized way : an AJAX search is triggered on AureHal (based on idHal if idhal_s is provided, or based on fullname if not)
 // When idhal_s is not provided OR when AJAX search fails, this function will do best effort but it may lead to errors or approximations (some fullnames may be incorreclty parsed, notably when homonyms are returned by the AJAX search).
 function getFirstnameLastname(fullname, idhal_s, callback_function) {
-		var name = fullname.split(new RegExp("[\\s]+","gi"));
-		if (name.length==2) {
-			return window.setTimeout( function(){ callback_function(name[0], name[1], 2); });
-		} else {
-			var fallback_best_effort = function(f, errno) {
-				var fullname_s = fullname.replace(/\+|\s+/g, " ");
-				// TODO : A voir: ici on pourrait detecter un pattern du type "minuscules bla bla MAJUSCULES BLA" qui nous donnerait une indication sur la frontière entre prénomnom, mais il ya le problème épineux des accents Unicode à gérer.
-				callback_function(name[0], name[1], errno);
-				// TODO : A voir: au lieu de couper bêtement au premier espace trouvé, on pourrait chercher dans une liste de prénoms connus (et dans une liste de particules de noms propres connues) pour essayer de donner des poids aux différents espaces pour déterminer celui qui obtient le meilleur score.
-			}
-			var requete = "wt=json&rows=32&sort=valid_s%20desc&fl=idHal_s,firstName_s,lastName_s,fullName_s,valid_s";
-			requete += (idhal_s!=""? "&q=idHal_s:%22" + idhal_s + "%22"
-			                       : "&q=fullName_sci:%22" + fullname.replace(/\s+/g, "+") + "%22");
-			return $.ajax("https://api.archives-ouvertes.fr/ref/author", {data: requete, dataType: 'json', jsonp: false, error: function() {		
-				fallback_best_effort(fullname, -1);
-			}, success: function( data ) {
-				if (!data.response || !data.response.docs || !data.response.docs.length)
-					fallback_best_effort(fullname, -2);
-				else {
-					var reponses = data.response.docs;
-					var fullname_s = fullname.replace(/\+|\s+/g, " ");
-					var fullname_sci = removeDiacritics(fullname_s.toLowerCase());
-					var exactMatch = -1;
-					var insensitiveMatch = -1;
-					for (var i = 0; i < reponses.length; i++) {
-						if (reponses[i].firstName_s+" "+reponses[i].lastName_s==fullname_s) {
-							exactMatch = i;
-							break;
-						}
-						if (removeDiacritics(reponses[i].firstName_s+" "+reponses[i].lastName_s).toLowerCase()==fullname_sci) {
-							insensitiveMatch = i;
-						}
-					}
-					var i = insensitiveMatch;
-					if (exactMatch >= 0)
-						i = exactMatch;
-					if (i >= 0)
-						callback_function(reponses[i].firstName_s, reponses[i].lastName_s, (idhal_s!=""? 1 : 0));
-					else
-						fallback_best_effort(fullname, -3);
-				}
-			}});
-		}
+        var name = fullname.split(new RegExp("[\\s]+","gi"));
+        if (name.length==2) {
+            return window.setTimeout( function(){ callback_function(name[0], name[1], 2); });
+        } else {
+            var fallback_best_effort = function(f, errno) {
+                var fullname_s = fullname.replace(/\+|\s+/g, " ");
+                // TODO : A voir: ici on pourrait detecter un pattern du type "minuscules bla bla MAJUSCULES BLA" qui nous donnerait une indication sur la frontière entre prénomnom, mais il ya le problème épineux des accents Unicode à gérer.
+                callback_function(name[0], name[1], errno);
+                // TODO : A voir: au lieu de couper bêtement au premier espace trouvé, on pourrait chercher dans une liste de prénoms connus (et dans une liste de particules de noms propres connues) pour essayer de donner des poids aux différents espaces pour déterminer celui qui obtient le meilleur score.
+            }
+            var requete = "wt=json&rows=32&sort=valid_s%20desc&fl=idHal_s,firstName_s,lastName_s,fullName_s,valid_s";
+            requete += (idhal_s!=""? "&q=idHal_s:%22" + idhal_s + "%22"
+                                   : "&q=fullName_sci:%22" + fullname.replace(/\s+/g, "+") + "%22");
+            return $.ajax("https://api.archives-ouvertes.fr/ref/author", {data: requete, dataType: 'json', jsonp: false, error: function() {        
+                fallback_best_effort(fullname, -1);
+            }, success: function( data ) {
+                if (!data.response || !data.response.docs || !data.response.docs.length)
+                    fallback_best_effort(fullname, -2);
+                else {
+                    var reponses = data.response.docs;
+                    var fullname_s = fullname.replace(/\+|\s+/g, " ");
+                    var fullname_sci = removeDiacritics(fullname_s.toLowerCase());
+                    var exactMatch = -1;
+                    var insensitiveMatch = -1;
+                    for (var i = 0; i < reponses.length; i++) {
+                        if (reponses[i].firstName_s+" "+reponses[i].lastName_s==fullname_s) {
+                            exactMatch = i;
+                            break;
+                        }
+                        if (removeDiacritics(reponses[i].firstName_s+" "+reponses[i].lastName_s).toLowerCase()==fullname_sci) {
+                            insensitiveMatch = i;
+                        }
+                    }
+                    var i = insensitiveMatch;
+                    if (exactMatch >= 0)
+                        i = exactMatch;
+                    if (i >= 0)
+                        callback_function(reponses[i].firstName_s, reponses[i].lastName_s, (idhal_s!=""? 1 : 0));
+                    else
+                        fallback_best_effort(fullname, -3);
+                }
+            }});
+        }
 }
 
 // Effectue une requête AJAX puis appelle la fonction success_callback avec un parametre booleen qui vaut vrai si la requete AJAX a retourné un tableau vide, faux sinon.
 // En cas d'erreur, la fonction error_callback est appelée en lieu et place de success_callback
 function is_empty_json_response(ajax_url, ajax_request, callback_success, callback_error) {
-	return $.ajax(ajax_url, {data: ajax_request, dataType: 'json', jsonp: false, error: function() {
-		if (callback_error)
-			callback_error(-1);
-	}, success: function( data ) {
-		var there_is_something = false;
-		if (data.response && data.response.numFound)
-			there_is_something |= (data.response.numFound > 0);
-		if (data.grouped)
-			for (var child in data.grouped)
-				if (data.grouped.hasOwnProperty(child))
-					there_is_something |= (data.grouped[child].matches);
-		if (callback_success)
-			callback_success(!there_is_something);
-	}});
+    return $.ajax(ajax_url, {data: ajax_request, dataType: 'json', jsonp: false, error: function() {
+        if (callback_error)
+            callback_error(-1);
+    }, success: function( data ) {
+        var there_is_something = false;
+        if (data.response && data.response.numFound)
+            there_is_something |= (data.response.numFound > 0);
+        if (data.grouped)
+            for (var child in data.grouped)
+                if (data.grouped.hasOwnProperty(child))
+                    there_is_something |= (data.grouped[child].matches);
+        if (callback_success)
+            callback_success(!there_is_something);
+    }});
 }
 
 
 function getJournalID(journal_name, callback_success, callback_error, original_journal_name) {
-	if (!original_journal_name)
-		original_journal_name = journal_name;
-	var trimmed_name = journal_name.replace(/^[\s-"'_.;,]*/, '').replace(/[\s-"'.:;_,]$/, '').replace(/\+|\s+/g, " ").replace(/’/g, "'");
-	return $.ajax("https://api.archives-ouvertes.fr/ref/journal/", {data: 'q=title_t:%22'+encodeURIComponent(trimmed_name)
-	+'%22&wt=json&fl=docid,label_s,title_s,titleAbbr_s,valid_s&sort=valid_s+desc,label_s+asc&rows=1000', dataType: 'json', jsonp: false, error: function() {
-		if (callback_error)
-			callback_error(-1, original_journal_name);
-	}, success: function( data ) {
-		if (!data.response || !data.response.docs)
-			callback_error(-2, original_journal_name);
-		else {
-			var reponses = data.response.docs;
-			var fullname_s = trimmed_name;
-			var fullname_sci = removeDiacritics(fullname_s.toLowerCase());
-			var exactMatch = -1;
-			var insensitiveMatch = -1;
-			var abbrevMatch = -1;
-			var partialMatch = -1;
-			for (var i = 0; i < reponses.length; i++) {
-				if ((!reponses[i].titleAbbr_s || reponses[i].titleAbbr_s=='') && reponses[i].title_s) {
-					// on essaye d'extraire l'acronyme dans le titre (si il y est) :
-					if (reponses[i].title_s.match(/^\s*([A-Z]\.)+[A-Z]?\s*$/i)) {
-							reponses[i].titleAbbr_s=reponses[i].title_s;
-					} else {
-						var matches = fullname_sci.match(/\([A-Z]\.?[A-Z]\.?(?:[A-Z]\.?)+\)/i);
-						if (matches && matches[0]!='') {
-							reponses[i].titleAbbr_s=matches[0].replace(/[()]/gi, "");
-						}
-					}
-				}
-				if (reponses[i].title_s && reponses[i].title_s.replace(/’/g, "'")==fullname_s) {
-					exactMatch = i;
-					break;
-				}
-				if (insensitiveMatch == -1 && reponses[i].title_s && removeDiacritics(reponses[i].title_s).toLowerCase().replace(/’/g, "'")==fullname_sci) {
-					insensitiveMatch = i;
-				}
-				if (abbrevMatch == -1 && reponses[i].titleAbbr_s && removeDiacritics(reponses[i].titleAbbr_s).toLowerCase().replace(/\./gi, '')==fullname_sci.replace(/\./gi, '')) {
-					abbrevMatch = i;
-				}
-				if (partialMatch == -1 && reponses[i].title_s && removeDiacritics(reponses[i].title_s).toLowerCase().replace(/’/g, "'").match('^\\s*'+fullname_sci.replace(/[|.?^$\[\](){}\\/]/gi, "\\$1"))) {
-					partialMatch = i;
-				}
-			}
-			var i = partialMatch;
-			if (abbrevMatch >=0)
-				i = abbrevMatch;
-			if (insensitiveMatch >=0)
-				i = insensitiveMatch;
-			if (exactMatch >= 0)
-				i = exactMatch;
-			if (i >= 0)
-				callback_success(reponses[i].docid, original_journal_name, reponses[i]);
-			else {
-				var matches = fullname_sci.match(/\([A-Z][A-Z][A-Z]+\)/i);
-				if (matches && matches[0]!='') {
-					// on refait une tentative avec juste l'acronyme :
-					getJournalID(matches[0].replace(/[()]/gi, ""), callback_success, callback_error, original_journal_name);
-				} else if (fullname_sci.match(/\(.+\)\s*$/i)) {
-					// on refait une tentative sans la parenthèse :
-					getJournalID(fullname_sci.replace(/\(.+\)\s*$/i, ''), callback_success, callback_error, original_journal_name);
-				} else if (fullname_sci.match(/[:]/)) {
-					// on refait une tentative avec juste le début du titre :
-					getJournalID(fullname_sci.replace(/\s*[:](.*)$/gi, ""), callback_success, callback_error, original_journal_name);
-				} else if (fullname_sci.match(/[\-/]/)) {
-					getJournalID(fullname_sci.replace(/\s*[\-/](.*)$/gi, ""), callback_success, callback_error, original_journal_name);
-				} else 
-					callback_success(0, original_journal_name, []);
-			}
-		}
-	}});
+    if (!original_journal_name)
+        original_journal_name = journal_name;
+    var trimmed_name = journal_name.replace(/^[\s-"'_.;,]*/, '').replace(/[\s-"'.:;_,]$/, '').replace(/\+|\s+/g, " ").replace(/’/g, "'");
+    return $.ajax("https://api.archives-ouvertes.fr/ref/journal/", {data: 'q=title_t:%22'+encodeURIComponent(trimmed_name)
+    +'%22&wt=json&fl=docid,label_s,title_s,titleAbbr_s,valid_s&sort=valid_s+desc,label_s+asc&rows=1000', dataType: 'json', jsonp: false, error: function() {
+        if (callback_error)
+            callback_error(-1, original_journal_name);
+    }, success: function( data ) {
+        if (!data.response || !data.response.docs)
+            callback_error(-2, original_journal_name);
+        else {
+            var reponses = data.response.docs;
+            var fullname_s = trimmed_name;
+            var fullname_sci = removeDiacritics(fullname_s.toLowerCase());
+            var exactMatch = -1;
+            var insensitiveMatch = -1;
+            var abbrevMatch = -1;
+            var partialMatch = -1;
+            for (var i = 0; i < reponses.length; i++) {
+                if ((!reponses[i].titleAbbr_s || reponses[i].titleAbbr_s=='') && reponses[i].title_s) {
+                    // on essaye d'extraire l'acronyme dans le titre (si il y est) :
+                    if (reponses[i].title_s.match(/^\s*([A-Z]\.)+[A-Z]?\s*$/i)) {
+                            reponses[i].titleAbbr_s=reponses[i].title_s;
+                    } else {
+                        var matches = fullname_sci.match(/\([A-Z]\.?[A-Z]\.?(?:[A-Z]\.?)+\)/i);
+                        if (matches && matches[0]!='') {
+                            reponses[i].titleAbbr_s=matches[0].replace(/[()]/gi, "");
+                        }
+                    }
+                }
+                if (reponses[i].title_s && reponses[i].title_s.replace(/’/g, "'")==fullname_s) {
+                    exactMatch = i;
+                    break;
+                }
+                if (insensitiveMatch == -1 && reponses[i].title_s && removeDiacritics(reponses[i].title_s).toLowerCase().replace(/’/g, "'")==fullname_sci) {
+                    insensitiveMatch = i;
+                }
+                if (abbrevMatch == -1 && reponses[i].titleAbbr_s && removeDiacritics(reponses[i].titleAbbr_s).toLowerCase().replace(/\./gi, '')==fullname_sci.replace(/\./gi, '')) {
+                    abbrevMatch = i;
+                }
+                if (partialMatch == -1 && reponses[i].title_s && removeDiacritics(reponses[i].title_s).toLowerCase().replace(/’/g, "'").match('^\\s*'+fullname_sci.replace(/[|.?^$\[\](){}\\/]/gi, "\\$1"))) {
+                    partialMatch = i;
+                }
+            }
+            var i = partialMatch;
+            if (abbrevMatch >=0)
+                i = abbrevMatch;
+            if (insensitiveMatch >=0)
+                i = insensitiveMatch;
+            if (exactMatch >= 0)
+                i = exactMatch;
+            if (i >= 0)
+                callback_success(reponses[i].docid, original_journal_name, reponses[i]);
+            else {
+                var matches = fullname_sci.match(/\([A-Z][A-Z][A-Z]+\)/i);
+                if (matches && matches[0]!='') {
+                    // on refait une tentative avec juste l'acronyme :
+                    getJournalID(matches[0].replace(/[()]/gi, ""), callback_success, callback_error, original_journal_name);
+                } else if (fullname_sci.match(/\(.+\)\s*$/i)) {
+                    // on refait une tentative sans la parenthèse :
+                    getJournalID(fullname_sci.replace(/\(.+\)\s*$/i, ''), callback_success, callback_error, original_journal_name);
+                } else if (fullname_sci.match(/[:]/)) {
+                    // on refait une tentative avec juste le début du titre :
+                    getJournalID(fullname_sci.replace(/\s*[:](.*)$/gi, ""), callback_success, callback_error, original_journal_name);
+                } else if (fullname_sci.match(/[\-/]/)) {
+                    getJournalID(fullname_sci.replace(/\s*[\-/](.*)$/gi, ""), callback_success, callback_error, original_journal_name);
+                } else 
+                    callback_success(0, original_journal_name, []);
+            }
+        }
+    }});
 }
 
 
 function getStructures(query, callback_success, callback_error) {
-	return $.ajax("https://api.archives-ouvertes.fr/ref/structure/", {data: 'q='+query+'&wt=json&fl=name_s,code_s,acronym_s,docid,address_s,type_s,url_s,valid_s,updateDate_s,parentDocid_i&group=true&group.field=type_s&group.limit=200&sort=type_s+asc,valid_s+desc,name_s+asc', dataType: 'json', jsonp: false, error: function() {		
-		callback_error(-1, query);
-	}, success: function( d ) {
-	  var reponses = d.grouped.type_s.groups;
-	  var structure_groups = {};
-	  var structures_tree = [];
-	  if (reponses !== undefined) {
-		  for (var i = 0; i < reponses.length; i++) {
-		  	structure_groups[reponses[i].groupValue]=reponses[i].doclist.docs;
-		  }
-	  }
-	  if (structure_groups.institution) {
-		  for (var i = 0; i < structure_groups.institution.length; i++) {
-		  	structures_tree.push(structure_groups.institution[i]);
-		  }
-		  delete structure_groups.institution;
-	  }
-	  if (structure_groups.laboratory) {
-		  for (var i = 0; i < structure_groups.laboratory.length; i++) {
-		  	structures_tree.push(structure_groups.laboratory[i]);
-		  }
-		  delete structure_groups.laboratory;
-	  }
-	  if (structure_groups.department) {
-		  for (var i = 0; i < structure_groups.department.length; i++) {
-		  	structures_tree.push(structure_groups.department[i]);
-		  }
-		  delete structure_groups.department;
-	  }
-	  if (structure_groups.researchteam) {
-		  for (var i = 0; i < structure_groups.researchteam.length; i++) {
-		  	structures_tree.push(structure_groups.researchteam[i]);
-		  }
-		  delete structure_groups.researchteam;
-	  }
-	  for (var key in structure_groups) {
-		  // skip loop if the property is from prototype
-		  if (!structure_groups.hasOwnProperty(key)) continue;
-		  for (var i = 0; i < structure_groups[key].length; i++) {
-		  	structures_tree.push(structure_groups[key][i]);
-		  }
-	  }
-	  // now let's make an index of all available Docids :
-	  var structures_index = {};
-	  for (var i = 0; i < structures_tree.length; i++) {
-	  	structures_index[structures_tree[i].docid+'']=structures_tree[i];
-	  }
-	  // and then, let's move siblings to their right place :
-	  for (var i = 0; i < structures_tree.length; i++) {
-	  	for (var j = 0; j < (structures_tree[i].parentDocid_i ? structures_tree[i].parentDocid_i.length : 0); j++) {
-	  		if (structures_index[structures_tree[i].parentDocid_i[j]+'']) {
-	  			if (!structures_index[structures_tree[i].parentDocid_i[j]+''].substructures) {
-	  				structures_index[structures_tree[i].parentDocid_i[j]+''].substructures = [];
-	  			}
-	  			structures_index[structures_tree[i].parentDocid_i[j]+''].substructures.push(structures_tree[i]);
-	  			structures_tree.splice(i,1);
-	  			i--;
-	  			break;
-	  		}
-	  	}
-	  }
-	  callback_success(reponses, structures_index, structures_tree, query);
-	}});
+    return $.ajax("https://api.archives-ouvertes.fr/ref/structure/", {data: 'q='+query+'&wt=json&fl=name_s,code_s,acronym_s,docid,address_s,type_s,url_s,valid_s,updateDate_s,parentDocid_i&group=true&group.field=type_s&group.limit=200&sort=type_s+asc,valid_s+desc,name_s+asc', dataType: 'json', jsonp: false, error: function() {        
+        callback_error(-1, query);
+    }, success: function( d ) {
+      var reponses = d.grouped.type_s.groups;
+      var structure_groups = {};
+      var structures_tree = [];
+      if (reponses !== undefined) {
+          for (var i = 0; i < reponses.length; i++) {
+              structure_groups[reponses[i].groupValue]=reponses[i].doclist.docs;
+          }
+      }
+      if (structure_groups.institution) {
+          for (var i = 0; i < structure_groups.institution.length; i++) {
+              structures_tree.push(structure_groups.institution[i]);
+          }
+          delete structure_groups.institution;
+      }
+      if (structure_groups.laboratory) {
+          for (var i = 0; i < structure_groups.laboratory.length; i++) {
+              structures_tree.push(structure_groups.laboratory[i]);
+          }
+          delete structure_groups.laboratory;
+      }
+      if (structure_groups.department) {
+          for (var i = 0; i < structure_groups.department.length; i++) {
+              structures_tree.push(structure_groups.department[i]);
+          }
+          delete structure_groups.department;
+      }
+      if (structure_groups.researchteam) {
+          for (var i = 0; i < structure_groups.researchteam.length; i++) {
+              structures_tree.push(structure_groups.researchteam[i]);
+          }
+          delete structure_groups.researchteam;
+      }
+      for (var key in structure_groups) {
+          // skip loop if the property is from prototype
+          if (!structure_groups.hasOwnProperty(key)) continue;
+          for (var i = 0; i < structure_groups[key].length; i++) {
+              structures_tree.push(structure_groups[key][i]);
+          }
+      }
+      // now let's make an index of all available Docids :
+      var structures_index = {};
+      for (var i = 0; i < structures_tree.length; i++) {
+          structures_index[structures_tree[i].docid+'']=structures_tree[i];
+      }
+      // and then, let's move siblings to their right place :
+      for (var i = 0; i < structures_tree.length; i++) {
+          for (var j = 0; j < (structures_tree[i].parentDocid_i ? structures_tree[i].parentDocid_i.length : 0); j++) {
+              if (structures_index[structures_tree[i].parentDocid_i[j]+'']) {
+                  if (!structures_index[structures_tree[i].parentDocid_i[j]+''].substructures) {
+                      structures_index[structures_tree[i].parentDocid_i[j]+''].substructures = [];
+                  }
+                  structures_index[structures_tree[i].parentDocid_i[j]+''].substructures.push(structures_tree[i]);
+                  structures_tree.splice(i,1);
+                  i--;
+                  break;
+              }
+          }
+      }
+      callback_success(reponses, structures_index, structures_tree, query);
+    }});
 }
 
 function writeStructures(structures, level, lang) {
-	var c = "";
-	for (var j = 0; j < structures.length; j++) {
-		var s = structures[j];
-		c = c + '<div class="row">';
-		for (var i = 0; i < (level-1); i++) {
-			c = c + '<div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"><div class="bounds b_vertical b_vertical_0" style="display: none;"></div><div class="bounds b_horizontal b_horizontal_0" style="display: none;"></div></div>';
-		}
-		if (level > 0) {
-			c = c + '<div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"><div class="bounds b_vertical b_vertical_1 b_last "></div><div class="bounds b_horizontal b_horizontal_1 b_last "><i class="glyphicon glyphicon-play arrow" style="left:7px;"></i></div></div>';
-		}
-		c = c + '<div data-rank="'+(12-level)+'" class="col-xs-'+(12-level)+' col-sm-'+(12-level)+' col-md-'+(12-level)+' col-lg-'+(12-level)+'" data-category="'+s.type_s+'">';
-		var icon_class = "";
-		if (s.valid_s=="VALID") { icon_class = "alert-success"; }
-		if (s.valid_s=="INCOMING") { icon_class = "alert-danger"; }
-		if (s.valid_s=="OLD") { icon_class = "alert-warning"; }
-		var block_class = "statut-"+s.valid_s;
-		var titre = "This structure was last updated on "+s.updateDate_s;
-		var icon_type_struct = '<span class="label label-primary">'+s.type_s[0].toUpperCase()+s.type_s.slice(1)+'</span>';
-		if (lang=="fr") {
-			if (s.type_s=="researchteam") { icon_type_struct = '<span class="label label-primary">&Eacute;quipe de recherche</span>'; }
-			if (s.type_s=="department")   { icon_type_struct = '<span class="label label-success">D&eacute;partement</span>'; }
-			if (s.type_s=="laboratory")   { icon_type_struct = '<span class="label label-warning">Laboratoire</span>'; }
-			if (s.type_s=="institution")  { icon_type_struct = '<span class="label label-danger">Institution</span>'; }
-			titre = "Structure mise &agrave; jour le "+s.updateDate_s;
-		} else {
-			if (s.type_s=="researchteam") { icon_type_struct = '<span class="label label-primary">Research Team</span>'; }
-		}
-		c = c + '<blockquote class="structure-element-'+s.type_s+' '+block_class+'" title="'+titre+'">';
-		c = c + '<div class="boutons_supplementaires"><a class="btn btn-primary" target="_blank" href="https://hal.archives-ouvertes.fr/search/index/q/*/structId_i/'+s.docid+'">Voir les d&eacute;p&ocirc;ts associ&eacute;s</a></div>';
-		c = c + '<h6 onclick="link(\'https://aurehal.archives-ouvertes.fr/structure/read/id/'+s.docid+'\');"><i style="background:none;border:0;" class="glyphicon glyphicon-ok-circle '+icon_class+'"></i>&nbsp;'+s.name_s+'&nbsp;'+icon_type_struct+'<span class="badge">'+s.docid+'</span></h6><div onclick="link(\'https://aurehal.archives-ouvertes.fr/structure/read/id/'+s.docid+'\');"><small>'+s.acronym_s+'</small>'+(s.code_s && s.code_s!=''?'<small><i>'+s.code_s+'</i></small>':'')+(s.address_s && s.address_s!=''?'<small>'+s.address_s+'</small>':'')+'France'+(s.url_s && s.url_s!=''?'<small><a target="_blank" href="'+s.url_s+'">'+s.url_s+'</a></small>':'')+'</div></blockquote>';
-		c = c + "</div></div>";
-		if (s.substructures && s.substructures.length>0) {
-			c = c + writeStructures(s.substructures, level+1, lang);
-		}
-	}
-	return c;
+    var c = "";
+    for (var j = 0; j < structures.length; j++) {
+        var s = structures[j];
+        c = c + '<div class="row">';
+        for (var i = 0; i < (level-1); i++) {
+            c = c + '<div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"><div class="bounds b_vertical b_vertical_0" style="display: none;"></div><div class="bounds b_horizontal b_horizontal_0" style="display: none;"></div></div>';
+        }
+        if (level > 0) {
+            c = c + '<div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"><div class="bounds b_vertical b_vertical_1 b_last "></div><div class="bounds b_horizontal b_horizontal_1 b_last "><i class="glyphicon glyphicon-play arrow" style="left:7px;"></i></div></div>';
+        }
+        c = c + '<div data-rank="'+(12-level)+'" class="col-xs-'+(12-level)+' col-sm-'+(12-level)+' col-md-'+(12-level)+' col-lg-'+(12-level)+'" data-category="'+s.type_s+'">';
+        var icon_class = "";
+        if (s.valid_s=="VALID") { icon_class = "alert-success"; }
+        if (s.valid_s=="INCOMING") { icon_class = "alert-danger"; }
+        if (s.valid_s=="OLD") { icon_class = "alert-warning"; }
+        var block_class = "statut-"+s.valid_s;
+        var titre = "This structure was last updated on "+s.updateDate_s;
+        var icon_type_struct = '<span class="label label-primary">'+s.type_s[0].toUpperCase()+s.type_s.slice(1)+'</span>';
+        if (lang=="fr") {
+            if (s.type_s=="researchteam") { icon_type_struct = '<span class="label label-primary">&Eacute;quipe de recherche</span>'; }
+            if (s.type_s=="department")   { icon_type_struct = '<span class="label label-success">D&eacute;partement</span>'; }
+            if (s.type_s=="laboratory")   { icon_type_struct = '<span class="label label-warning">Laboratoire</span>'; }
+            if (s.type_s=="institution")  { icon_type_struct = '<span class="label label-danger">Institution</span>'; }
+            titre = "Structure mise &agrave; jour le "+s.updateDate_s;
+        } else {
+            if (s.type_s=="researchteam") { icon_type_struct = '<span class="label label-primary">Research Team</span>'; }
+        }
+        c = c + '<blockquote class="structure-element-'+s.type_s+' '+block_class+'" title="'+titre+'">';
+        c = c + '<div class="boutons_supplementaires"><a class="btn btn-primary" target="_blank" href="https://hal.archives-ouvertes.fr/search/index/q/*/structId_i/'+s.docid+'">Voir les d&eacute;p&ocirc;ts associ&eacute;s</a></div>';
+        c = c + '<h6 onclick="link(\'https://aurehal.archives-ouvertes.fr/structure/read/id/'+s.docid+'\');"><i style="background:none;border:0;" class="glyphicon glyphicon-ok-circle '+icon_class+'"></i>&nbsp;'+s.name_s+'&nbsp;'+icon_type_struct+'<span class="badge">'+s.docid+'</span></h6><div onclick="link(\'https://aurehal.archives-ouvertes.fr/structure/read/id/'+s.docid+'\');"><small>'+s.acronym_s+'</small>'+(s.code_s && s.code_s!=''?'<small><i>'+s.code_s+'</i></small>':'')+(s.address_s && s.address_s!=''?'<small>'+s.address_s+'</small>':'')+'France'+(s.url_s && s.url_s!=''?'<small><a target="_blank" href="'+s.url_s+'">'+s.url_s+'</a></small>':'')+'</div></blockquote>';
+        c = c + "</div></div>";
+        if (s.substructures && s.substructures.length>0) {
+            c = c + writeStructures(s.substructures, level+1, lang);
+        }
+    }
+    return c;
 }
 
 // Generates part of a search URL containing all name variations possible for a given fullname.
@@ -483,48 +499,48 @@ function writeStructures(structures, level, lang) {
 // examples: "Pierre-Aurélien Del Giudice" will return "%22del+giudice+Pierre-Aurelien%22+OR+%22Pierre-Aurelien+del+giudice%22+OR+%22del+giudice+P%2EA%2E%22+OR+%22P%2EA%2E+del+giudice%22+OR+%22del+giudice+P%2E A%2E%22+OR+%22P%2E A%2E+del+giudice%22+OR+%22del+giudice+P%2DA%2E%22+OR+%22P%2DA%2E+del+giudice%22+OR+%22del+giudice+P%2E%2DA%2E%22+OR+%22P%2E%2DA%2E+del+giudice%22"
 //           "Jean-R. Parada Gonzalez" should return "%22parada+jean-r%2E%22+Or+%22jean-r%2E+parada%22+Or+%22parada+j%2Er%2E%22+Or+%22j%2Er%2E+parada%22+Or+%22parada+j%2E r%2E%22+Or+%22j%2E r%2E+parada%22+Or+%22parada+j%2Dr%2E%22+Or+%22j%2Dr%2E+parada%22+Or+%22parada+j%2E%2Dr%2E%22+Or+%22j%2E%2Dr%2E+parada%22"
 //           "M.Paule Foo-Salvan" should return "%22foo+m%2Epaule%22+Op+%22m%2Epaule+foo%22+Op+%22foo+m%2Ep%2E%22+Op+%22m%2Ep%2E+foo%22+Op+%22foo+m%2E p%2E%22+Op+%22m%2E p%2E+foo%22+Op+%22foo+m%2Dp%2E%22+Op+%22m%2Dp%2E+foo%22+Op+%22foo+m%2E%2Dp%2E%22+Op+%22m%2E%2Dp%2E+foo%22"
-//			 "Philippe-Christian XXX" should return all combinations of [P. | Ph.] + [Chr. | Ch. | C.]
+//             "Philippe-Christian XXX" should return all combinations of [P. | Ph.] + [Chr. | Ch. | C.]
 //
 // Notes : when the lastname contains several words, the search is performed on the first word only when first word is at least 5 chars long. This is in order to avoid situations where "van der Schmutz" would be reduced to "van" and nevertheless account for situations where "Parada Gonzalez" or "Gaudin-Salvan" should be reduced respectively to "Parada" and "Gaudin"...
 function generate_alternate_names(firstname, lastname) {
-	var prenoms=removeDiacritics(firstname);
-	var nom = removeDiacritics(lastname).split(new RegExp("[^a-z'\u2018-\u201B]","gi"));
-	if (nom[0].length<5) {
-		nom = removeDiacritics(lastname).split(new RegExp("-","gi"));
-	}
-	nom = encodeURIComponent(nom[0]);
-	var alternate_criterias="%22"+nom+"+"+encodeURIComponent(prenoms)+"%22+OR+%22"+encodeURIComponent(prenoms)+"+"+nom+"%22";
+    var prenoms=removeDiacritics(firstname);
+    var nom = removeDiacritics(lastname).split(new RegExp("[^a-z'\u2018-\u201B]","gi"));
+    if (nom[0].length<5) {
+        nom = removeDiacritics(lastname).split(new RegExp("-","gi"));
+    }
+    nom = encodeURIComponent(nom[0]);
+    var alternate_criterias="%22"+nom+"+"+encodeURIComponent(prenoms)+"%22+OR+%22"+encodeURIComponent(prenoms)+"+"+nom+"%22";
 
-	prenoms = prenoms.split(new RegExp("[^a-z'\u2018-\u201B]","gi"));
-	if (!prenoms || prenoms.length < 1)
-		return "%22"+nom+"%22";
+    prenoms = prenoms.split(new RegExp("[^a-z'\u2018-\u201B]","gi"));
+    if (!prenoms || prenoms.length < 1)
+        return "%22"+nom+"%22";
 
-	var my_recursive_function = function (firstnames, first_lastname, level) {
-		var initiales = [];
-		var abreviation=(new RegExp("^['\u2018-\u201B]?[aeiouy]","i")).exec(firstnames[level-1]);
-		if (!abreviation)
-			abreviation=firstnames[level-1].split(new RegExp("[aeiouy]","gi"));
-		abreviation=abreviation[0];
-		for (var j=1;j<=abreviation.length;j++)
-			initiales.push(encodeURIComponent(abreviation.slice(0,j)));
-		if (level < firstnames.length) {
-			var result = [];
-			var rest = arguments.callee(firstnames, first_lastname, level+1);
-			for (var j=0;j<initiales.length;j++)
-				for (var i=0;i<rest.length;i++)
-					result.push(initiales[j]+" "+rest[i]);
-			return result;
-		}
-		return initiales;
-	};
-			
-	var initiales = my_recursive_function(prenoms, nom, 1);
-	for (var j=0;j<initiales.length;j++) {
-		alternate_criterias=alternate_criterias+"+OR+%22"+nom+"+"+initiales[j]+"%2E%22+OR+%22"+initiales[j]+"%2E+"+nom+"%22";
-	}
-	if (alternate_criterias.match(/ /)) {
-		alternate_criterias = alternate_criterias.replace(/ /g,"%2E")+alternate_criterias.replace(/ /g,"%2E ")+alternate_criterias.replace(/ /g,"%2D")+alternate_criterias.replace(/ /g,"%2E%2D");
-	}
-	return alternate_criterias;
+    var my_recursive_function = function (firstnames, first_lastname, level) {
+        var initiales = [];
+        var abreviation=(new RegExp("^['\u2018-\u201B]?[aeiouy]","i")).exec(firstnames[level-1]);
+        if (!abreviation)
+            abreviation=firstnames[level-1].split(new RegExp("[aeiouy]","gi"));
+        abreviation=abreviation[0];
+        for (var j=1;j<=abreviation.length;j++)
+            initiales.push(encodeURIComponent(abreviation.slice(0,j)));
+        if (level < firstnames.length) {
+            var result = [];
+            var rest = arguments.callee(firstnames, first_lastname, level+1);
+            for (var j=0;j<initiales.length;j++)
+                for (var i=0;i<rest.length;i++)
+                    result.push(initiales[j]+" "+rest[i]);
+            return result;
+        }
+        return initiales;
+    };
+            
+    var initiales = my_recursive_function(prenoms, nom, 1);
+    for (var j=0;j<initiales.length;j++) {
+        alternate_criterias=alternate_criterias+"+OR+%22"+nom+"+"+initiales[j]+"%2E%22+OR+%22"+initiales[j]+"%2E+"+nom+"%22";
+    }
+    if (alternate_criterias.match(/ /)) {
+        alternate_criterias = alternate_criterias.replace(/ /g,"%2E")+alternate_criterias.replace(/ /g,"%2E ")+alternate_criterias.replace(/ /g,"%2D")+alternate_criterias.replace(/ /g,"%2E%2D");
+    }
+    return alternate_criterias;
 }
 
