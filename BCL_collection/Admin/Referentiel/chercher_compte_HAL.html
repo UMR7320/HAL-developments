@@ -1,0 +1,47 @@
+<!-- ATTENTION: avant de faire le copier/coller dans HAL, descendre jusqu'au premier <p> et supprimer tout ce qui se trouve avant (il faut virer tout le <head>)
+
+Le but des quelques lignes ci-dessous est simplement de mimer la structure du site HAL pour que l'on puisse prévisualiser le rendu (et debugger le javascript) dans un navigateur web.
+
+<html>
+<head>
+<link rel="stylesheet" href="http://static.ccsd.cnrs.fr/v3/css/bootstrap.css" type="text/css" media="screen">
+<link rel="stylesheet" href="http://static.ccsd.cnrs.fr/css/ccsd.css" type="text/css" media="screen">
+<link rel="stylesheet" href="http://aurehal.archives-ouvertes.fr/css/hal.css" type="text/css" media="screen">
+<link href="https://hal.archives-ouvertes.fr/BCL/public/style.css" rel="stylesheet" type="text/css" >
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script src="https://hal.archives-ouvertes.fr/BCL/public/collection_hal.js"></script>
+</head>
+<body>
+
+<!-- copier/coller dans HAL le code ci-dessous : -->
+
+<div class="alert alert-danger">Note: pour les recherches par nom+pr&eacute;nom, attention &agrave; bien utiliser l'ordre (et la syntaxe) "NOM prenom" (sinon le resultat ne sera pas garanti), i.e. ne pas mettre d'accents, et mettre le nom de famille en premier.</div>
+<div class="form-group text-center"><label for="user">Rechercher un compte HAL</label> <input id="user" class="ui-autocomplete-input" style="width: 400px;" autocomplete="off" type="text" placeholder="Recherche utilisateur (par nom, pr&eacute;nom, e-mail, login, user_id)" />&nbsp; <!--<button id="btnSearch" class="btn btn-primary" name="share" type="submit"> &nbsp; Rechercher </button>--></div>
+<script>// <![CDATA[
+$(document).ready(function(){
+                                src = '/administrate/ajaxsearchuser';
+                                $('#user').autocomplete({
+                                    min_length: 2,
+                                    html: true,
+                                    source: function(request, response) {
+                                        $.ajax({
+                                            url: src,
+                                            dataType: "json",
+                                            data: {
+                                                term : request.term,
+                                                valid : 1
+                                            },
+                                            success: function(data) {
+                                                response(data);
+                                            }
+                                        });
+                                    },
+                                    select: function( event, ui ) {
+                                      console.log(ui.item);
+                                    }
+                                });
+                            });
+// ]]></script>
+
+</body>
+</html>
