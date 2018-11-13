@@ -1,0 +1,124 @@
+<!-- ATTENTION: avant de faire le copier/coller dans HAL, descendre jusqu'au premier <p> et supprimer tout ce qui se trouve avant (il faut virer tout le <head>)
+
+Le but des quelques lignes ci-dessous est simplement de mimer la structure du site HAL pour que l'on puisse prévisualiser le rendu (et debugger le javascript) dans un navigateur web.
+
+<html>
+<head>
+<link rel="stylesheet" href="http://static.ccsd.cnrs.fr/v3/css/bootstrap.css" type="text/css" media="screen">
+<link rel="stylesheet" href="http://static.ccsd.cnrs.fr/css/ccsd.css" type="text/css" media="screen">
+<link rel="stylesheet" href="http://aurehal.archives-ouvertes.fr/css/hal.css" type="text/css" media="screen">
+<link href="https://hal.archives-ouvertes.fr/BCL/public/style.css" rel="stylesheet" type="text/css" >
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script src="https://hal.archives-ouvertes.fr/BCL/public/collection_hal.js"></script>
+</head>
+<body>
+
+<!-- copier/coller dans HAL le code ci-dessous : -->
+
+<p><strong>Membres du labo ayant au moins une forme auteur dans HAL :</strong></p>
+<p id="mybiblio-requirements" class="alert alert-fixed alert-danger">Pour continuer, vous devez activer Javascript dans votre navigateur internet, puis recharger cette page.<br />Please enable Javascript in your browser, then reload this page.</p>
+<aside class="legende" style="display:none;"><strong>Légende&nbsp;:</strong>
+<div class="bdd-labo">Infos issues de la BDD du labo</div>
+<div class="bdd-hal">Infos issues de HAL</div>
+</aside>
+<div style="display:none;" id="show_empty_lines">
+<input type="checkbox" id="show_empty_lines_checkbox" checked="checked" /><label for="show_empty_lines_checkbox"></label></div>
+<table id="liste_membres_BCL">
+</table>
+<script>// <![CDATA[
+
+// Localization: currently available languages are "en" and "fr".
+var lang=getCurrentLanguage();
+if (lang!="fr")
+  lang ="en";
+var author_forms_localization = {
+"searching_bdd":     {"fr": "[Etape 1/2]: Récupération de la liste des membres du labo…",
+                      "en": "[Step 1/2]: Retrieving laboratory's members list…"},
+"searching_hal":     {"fr": "[Etape 2/2]: Recherche des formes auteur dans HAL…",
+                      "en": "[Step 2/2]: Searching for HAL user forms…"},
+"searching_bdd_err": {"fr": "Une erreur est survenue lors de la recuperation de la liste des membres du labo.",
+                      "en": "An error occured while retrieving laboratory's members list."},
+"show_empty_lines":  {"fr": "Afficher aussi les membres pour lesquels on n'a pas trouvé de formes auteur dans HAL",
+                      "en": "Also show members for which we did not find any HAL user forms"},
+"rows_limit":        {"fr": "Attention: ces résultats sont incomplets, car le paramètre rows_limit est actuellement fixé à une valeur trop basse ([param]) dans la fonction searchFormeAuteur().",
+                      "en": "Warning: results are incomplete, because parameter rows_limit is currently set to a value too low ([param]) in function searchFormeAuteur()."},
+"unknown-warn":      {"fr": "Un avertissement s'est produit lors de la récupération des résultats, mais il n'y a pas de message précis associé à cet avertissement",
+                      "en": "A warning was issued during retrieval of these results, but there's no explanation message associated to this warning."}
+};
+
+	var listeMembres = [];
+	var listeFormesAuteurs = [];
+	$('#mybiblio-requirements').html(author_forms_localization['searching_bdd'][lang]);
+	$("#mybiblio-requirements").removeClass('alert-danger');
+	$("#mybiblio-requirements").addClass('alert-warning');
+	$("#mybiblio-requirements").addClass('loading');
+	$.when (getMembresBCL(function(liste) {listeMembres=liste;}, function(errno) {
+			$('#mybiblio-requirements').html(author_forms_localization['searching_bdd_err'][lang]);
+			$("#mybiblio-requirements").addClass('alert-danger');
+			$("#mybiblio-requirements").removeClass('alert-warning');
+			$("#mybiblio-requirements").removeClass('loading');
+		}) 
+	).done(function (response1, response2) {
+		$('#mybiblio-requirements').html(author_forms_localization['searching_hal'][lang]);
+		$('#show_empty_lines label').html(author_forms_localization['show_empty_lines'][lang]);
+		$('#show_empty_lines_checkbox').click(function() { 
+			if (this.checked) { $('.empty-line').show() } else { $('.empty-line').hide() }
+		});
+		var bdd_content="";
+		if (listeMembres && listeMembres.length) {
+			Object.keys(listeMembres[0]).forEach(function (c) { bdd_content=bdd_content+"<th class='bdd-labo'>"+c+"</th>" });
+			bdd_content="<thead><tr>"+bdd_content+"<th class='bdd-hal'>form_id</th><th class='bdd-hal'>fullname_s (Nom Prénom)</th><th class='bdd-hal'>emailDomain_s</th><th class='bdd-hal'>idHal_i</th><th class='bdd-hal'>idHal_s</th><th class='bdd-hal'>status (valid_s)</th><th class='bdd-hal'>LastIndexed</th></tr></thead>";
+		}
+		bdd_content=bdd_content+"<tbody></tbody>";
+		$('#liste_membres_BCL').html(bdd_content);
+		$('aside.legende').show();
+		var nbRecherchesJusqueIci = 0;
+		listeMembres.forEach(function(membre) {
+			console.log("Recherche de "+ membre.nom + ", " + membre.prenom +"...");						
+			searchFormeAuteur({nom: membre.nom, prenom: membre.prenom}, function(result, warnings) { 
+				if (warnings && warnings.length)
+				  warnings.forEach(function (e) {
+				  	$("#mybiblio-requirements").addClass('alert-danger');
+				  	if (author_forms_localization[e.warning])
+				      $('#mybiblio-requirements').append("<br/>"+author_forms_localization[e.warning][lang].replace("[param]", e.param).replace("[param2]", e.param2));
+				    else
+				      $('#mybiblio-requirements').append("<br/>"+author_forms_localization['unknown-warn'][lang]);
+				  });
+				var author_forms_found=0;
+				bdd_content="";
+				Object.values(membre).forEach(function (c) { bdd_content=bdd_content+"<td class='bdd-labo'>"+c+"</td>" });
+				if (result) {
+				   result.forEach(function (r) {
+				      author_forms_found++;		          
+				      $('#liste_membres_BCL > tbody:last-child').append('<tr class="'+r.valid_s.toLowerCase()+'">'+bdd_content+'<td class="bdd-hal"><span class="badge">'+r.docid+'</span></td><td class="bdd-hal">'+r.fullName_s+'</td><td class="bdd-hal address">'+(r.emailDomain_s ? r.emailDomain_s : '')+'</td><td class="bdd-hal idhal">'+(r.idHal_i ? r.idHal_i : '')+'</td><td class="bdd-hal">'+(r.idHal_s ? r.idHal_s : '')+'</td><td class="bdd-hal">'+r.valid_s+'</td><td class="bdd-hal">'+r.dateLastIndexed_tdate+'</td></tr>');
+				    }); // result.forEach() 
+				} // result not null
+				if (!author_forms_found) {
+				  $('#liste_membres_BCL > tbody:last-child').append('<tr class="empty-line">'+bdd_content+'<td></td><td></td></tr>');
+				}
+				nbRecherchesJusqueIci++;
+				if (nbRecherchesJusqueIci >= listeMembres.length) {
+					$("#mybiblio-requirements").removeClass('loading');
+					if (!$("#mybiblio-requirements").hasClass('alert-danger')) {
+						$("#mybiblio-requirements").html('');
+						$("#mybiblio-requirements").hide();
+					}
+					$('#show_empty_lines').show();
+				}
+			}, function (errno) {
+				$('#mybiblio-requirements').append("<br/>ERROR searching author "+membre.nom+" "+membre.prenom+".");
+				$("#mybiblio-requirements").addClass('alert-danger');
+				$("#mybiblio-requirements").removeClass('alert-warning');
+				nbRecherchesJusqueIci++;
+				if (nbRecherchesJusqueIci >= listeMembres.length) {
+					$("#mybiblio-requirements").removeClass('loading');
+					$('#show_empty_lines').show();
+				}
+			});
+		});
+	});
+// ]]></script>
+
+
+</body>
+</html>
