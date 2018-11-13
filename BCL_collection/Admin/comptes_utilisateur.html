@@ -76,7 +76,6 @@ var user_accounts_localization = {
 		listeMembres.forEach(function(membre) {
 			var normalized_lastname = removeDiacritics(membre.nom).toLowerCase().replace(new RegExp("['\"\\`]", 'g'), "").split(/[^a-z]/)[0];
 			console.log("Recherche de "+ membre.nom + ", " + membre.prenom +"...");
-			/* $('#liste_membres_BCL').html("<tr><td>recherche de "+ membre.nom + ", " + membre.prenom +"...</td></tr>"); */
 						
 			getHALUser(membre.nom+"\t"+membre.prenom, function(result, warnings) { 
 				if (warnings && warnings.length)
@@ -85,14 +84,15 @@ var user_accounts_localization = {
 				  	if (user_accounts_localization[e.warning])
 				      $('#mybiblio-requirements').append("<br/>"+user_accounts_localization[e.warning][lang].replace("[param]", e.param).replace("[param2]", e.param2));
 				    else
-				      $('#mybiblio-requirements').append("<br/>"+author_forms_localization['unknown-warn'][lang]);
+				      $('#mybiblio-requirements').append("<br/>"+user_accounts_localization['unknown-warn'][lang]);
 				  });
 				var accounts_found=0;
 				bdd_content="";
 				Object.values(membre).forEach(function (c) { bdd_content=bdd_content+"<td class='bdd-labo'>"+c+"</td>" });
 				if (result) {
 				   result.forEach(function (r) {
-				   	  var found = removeDiacritics(r.label).toLowerCase().replace(new RegExp("['\"\\`]", 'g'), "").startsWith(normalized_lastname+" ");
+				   	  var normalized_label = removeDiacritics(r.label).toLowerCase().replace(new RegExp("['\"\\`]", 'g'), "");
+				   	  var found = normalized_label.startsWith(normalized_lastname) && normalized_label.charAt(normalized_lastname.length).match(/\s|[\-_'’‛‘′]/);
 				   	  if (!found) {
 				   	  	// on tente de le repêcher par le biais de son email (au cas où, par ex. l'utilisateur aurait inversé les champs prenom et nom durant la création de son compte HAL - c'est du vécu !)
 				   	    var normalized_firstname = removeDiacritics(membre.prenom).toLowerCase().replace(new RegExp("['\"\\`]", 'g'), "").split(/[^a-z]/)[0];
@@ -100,7 +100,7 @@ var user_accounts_localization = {
 				   	  }
 				      if (found) {
 				        accounts_found++;		          
-				        $('#liste_membres_BCL > tbody:last-child').append('<tr>'+bdd_content+'<td class="bdd-hal">'+r.user_id+'</td><td class="bdd-hal">'+r.user_name+'</td><td class="bdd-hal">'+r.email+'</td><td class="bdd-hal">'+r.label+'</td></tr>');
+				        $('#liste_membres_BCL > tbody:last-child').append('<tr>'+bdd_content+'<td class="bdd-hal"><span class="badge">'+r.user_id+'</span></td><td class="bdd-hal">'+r.user_name+'</td><td class="bdd-hal address">'+r.email+'</td><td class="bdd-hal">'+r.label+'</td></tr>');
 				      }
 				    }); // result.forEach() 
 				} // result not null
