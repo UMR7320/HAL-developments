@@ -446,7 +446,27 @@ aside.legende div {
 .bdd-hal {
 	background-color: lightblue;
 }
+tr.valid td:not(.bdd-labo) {
+	background-color: #dff0d8;
+}
+tr.incoming td:not(.bdd-labo) {
+	background-color: #f2dede;
+}
+tr.old td:not(.bdd-labo) {
+	background-color: #fcf8e3;
+}
 
+/* ui-autocomplete (avec rendu HTML) sur les formes auteur : */
+.ui-autocomplete .ui-menu-item .address:not(:empty):before {
+	content: '(';
+	display: inline;
+}
+.ui-autocomplete .ui-menu-item .address {
+	font-style: italic;
+}
+.ui-autocomplete .ui-menu-item .address:not(:empty):after {
+	content: ')';
+}
 
 /* arborescence du référentiel structures : */
 div#bcl-structures blockquote {

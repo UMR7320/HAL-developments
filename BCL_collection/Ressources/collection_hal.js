@@ -1,4 +1,6 @@
 
+$.getScript("//static.ccsd.cnrs.fr/js/jquery/ui/autocomplete.html.js"); // permet d'activer le rendu HTML sur les popups d'autocomplete Jquery UI (tel que le fait le CCSD sur les autres pages de la plateforme HAL)
+
 // personnalisation du menu de navigation HAL (navbar fixed) :
 $("body > div.navbar > div.navbar-collapse > ul.navbar-nav > li:last-child").before("<li class='ladoc active'><a href='https://hal.archives-ouvertes.fr/section/documentation' title='Documentation HAL' style='font-weight: bold;'>Doc</a></li>");
 
@@ -200,7 +202,78 @@ function getIdHAL(nom_de_la_collection, full_name, callback_success, callback_er
     }});
 }
 
+// Recherche des formes auteurs dans le référentiel AuréHAL et retourne toutes leurs propriétés
+// Attention: certaines des formes auteurs retournées peuvent très bien n'être associées à aucune référence bibliographique
+// (scenario classique: références bibliographiques supprimées mais forme auteur conservée car rattachée à un idhal...)
+// C'est donc la bonne fonction à utiliser pour avoir l'exhaustivité des formes auteurs.
+// Qui plus est, contrairement à getFormesAuteurs(), cette fonction permet de récupérer l'idhal associé à chaque forme auteur.
+//
+// Le paramètre criteres doit contenir un objet avec les différents critères souhaités parmi : id, idhal, prenom, nom, email, fullname, structure, status, text (il faut au moins spécifier un critère).
+// Exemples : criteres = {prenom: "alain", nom: "nonyme"}
+//            criteres = {id: 12345}
+// Si plusieurs critères sont précisés, ils seront concaténés avec un ET logique.
+// Le critere "text" est un critère fourre-tout qui cherche dans tous les champs (cf. la doc de l'API du référentiel auteur)
+// Chaque fois que cela est possible, mieux vaut utiliser la combinaison prenom+nom plutôt que fullname.
+// La structure peut être un identifiant numérique (structureId_i) ou un nom (structure_s), mais les acronymes ne sont pas acceptés.
+// Pour l'email, il est possible de donner "@domaine.com" pour rechercher tous les emails d'un domaine,
+// ou bien "un_email@domaine.com" pour rechercher un email bien particulier.
+// En revanche il n'est PAS possible de recherche une partie d'un email (dans HAL, les emails sont hashés en MD5, et on ne peut donc pas faire de recherche approximative, sauf sur la partie nom de domaine)
+function searchFormeAuteur(criteres, callback_success, callback_error, limit) {
+	limit = (typeof limit === 'undefined') ? 100 : limit;
+	var criteres_hal = [];
+	Object.keys(criteres).forEach(function (c) {
+		if (c == "id")
+		  criteres_hal.push("docid:"+parseInt(criteres[c], 10));
+		else if (c == "text")
+		  criteres_hal.push("text:"+encodeURIComponent(criteres[c]));
+		else {
+		  var normalized_string = removeDiacritics(criteres[c]).toLowerCase();
+		  if (c == "idhal") {
+		  	if (normalized_string.match(/^[0-9]+$/))
+		      criteres_hal.push("idHal_i:"+parseInt(normalized_string, 10));
+		    else
+		      criteres_hal.push("idHal_s:%22"+encodeURIComponent(normalized_string) + "%22");
+		  } else if (c == "email") {
+		    if (criteres[c].startsWith("@"))
+		      criteres_hal.push("emailDomain_s:"+encodeURIComponent(normalized_string.substring(1)));
+		    else
+		      criteres_hal.push("email_s:"+MD5(normalized_string));
+		  } else {
+		    if (c == "prenom")
+		      criteres_hal.push("firstName_sci:(%22"+encodeURIComponent(normalized_string)+"%22%20OR%20%22"+encodeURIComponent(normalized_string.charAt(0))+"%22)");
+		    if (c == "nom")
+		      criteres_hal.push("lastName_sci:%22"+encodeURIComponent(normalized_string) + "%22");
+		    if (c == "fullname")
+			  criteres_hal.push("fullName_t:%22" + encodeURIComponent(normalized_string) + "%22");
+		    if (c == "status")
+			  criteres_hal.push("valid_s:%22" + encodeURIComponent(normalized_string) + "%22");
+			if (c == "structure") {
+		  	  if (normalized_string.match(/^[0-9]+$/))
+		        criteres_hal.push("structureId_i:"+parseInt(normalized_string, 10));
+			  else
+			    criteres_hal.push("structure_fs:%22" + encodeURIComponent(normalized_string) + "%22");
+			}
+		  }
+		}
+	});
+	return $.ajax("https://api.archives-ouvertes.fr/ref/author/", {data: 'q='+criteres_hal.join('%20AND%20')+'&wt=json&fl=*&rows='+limit, dataType: 'json', jsonp: false, error: function() {        
+        callback_error(-1);
+    }, success: function( data ) {
+          var warnings = [];
+          if (data.response.numFound && data.response.numFound >= limit) {
+            warnings.push({warning: "rows_limit", param: limit});
+          }
+          var liste = [];
+          if (data.response.docs)
+            liste = data.response.docs;
+          callback_success(liste, warnings);
+    }});
+}
+
 // Récupère la liste des formes auteurs d'une collection (ou d'un laboratoire possédant une collection)
+// Attention: ne sont retournées ici que les formes auteurs citées dans au moins une référence bibliographique
+// c.à.d. que les formes auteurs qui ne sont associées à aucune référence bibliographique dans HAL ne seront jamais retournées => pour cela, il vaut mieux utiliser la fonction searchFormeAuteur()
+// En l'état actuel de l'API de HAL, cette fonction ne permet hélas pas de récupérer les idhal associés à chaque forme auteur => pour cela, passer par la fonction searchFormeAuteur()
 // Le parametre id_structures est facultatif : il s'agit d'un tableau d'identifiants de structures. S'il est présent, ne seront pris en compte que les formes auteurs affiliées à l'une de ces structures. Cela permet de filtrer les coauteurs qui ne sont pas membres de ce laboratoire. Ex : id_structures = [199944, 107319]
 // le facet.limit sert à limiter les résultats retournés par l'API de HAL, 
 // mais sa valeur par défaut est bien trop basse (190 résultats, alors qu'on a ici besoin de l'exhaustivité des résultats). 
@@ -215,10 +288,10 @@ function getFormesAuteurs(nom_collection, id_structures, callback_success, callb
       if (!data.facet_counts || !data.facet_counts.facet_fields || !data.facet_counts.facet_fields.structHasAuthIdHal_fs)
               callback_error(-1,full_name); 
       else {
-            var warnings = [];
-            if (data.response.numFound && data.response.numFound >= facet_limit) {
-              warnings.push({warning: "facet_limit", param: facet_limit});
-            }
+          var warnings = [];
+          if (data.response.numFound && data.response.numFound >= facet_limit) {
+            warnings.push({warning: "facet_limit", param: facet_limit});
+          }
           var reponses = data.facet_counts.facet_fields.structHasAuthIdHal_fs;
           var liste = [];
           if (reponses !== undefined)
@@ -544,3 +617,4 @@ function generate_alternate_names(firstname, lastname) {
     return alternate_criterias;
 }
 
+var MD5 = function(d){result = M(V(Y(X(d),8*d.length)));return result.toLowerCase()};function M(d){for(var _,m="0123456789ABCDEF",f="",r=0;r<d.length;r++)_=d.charCodeAt(r),f+=m.charAt(_>>>4&15)+m.charAt(15&_);return f}function X(d){for(var _=Array(d.length>>2),m=0;m<_.length;m++)_[m]=0;for(m=0;m<8*d.length;m+=8)_[m>>5]|=(255&d.charCodeAt(m/8))<<m%32;return _}function V(d){for(var _="",m=0;m<32*d.length;m+=8)_+=String.fromCharCode(d[m>>5]>>>m%32&255);return _}function Y(d,_){d[_>>5]|=128<<_%32,d[14+(_+64>>>9<<4)]=_;for(var m=1732584193,f=-271733879,r=-1732584194,i=271733878,n=0;n<d.length;n+=16){var h=m,t=f,g=r,e=i;f=md5_ii(f=md5_ii(f=md5_ii(f=md5_ii(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_ff(f=md5_ff(f=md5_ff(f=md5_ff(f,r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+0],7,-680876936),f,r,d[n+1],12,-389564586),m,f,d[n+2],17,606105819),i,m,d[n+3],22,-1044525330),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+4],7,-176418897),f,r,d[n+5],12,1200080426),m,f,d[n+6],17,-1473231341),i,m,d[n+7],22,-45705983),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+8],7,1770035416),f,r,d[n+9],12,-1958414417),m,f,d[n+10],17,-42063),i,m,d[n+11],22,-1990404162),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+12],7,1804603682),f,r,d[n+13],12,-40341101),m,f,d[n+14],17,-1502002290),i,m,d[n+15],22,1236535329),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+1],5,-165796510),f,r,d[n+6],9,-1069501632),m,f,d[n+11],14,643717713),i,m,d[n+0],20,-373897302),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+5],5,-701558691),f,r,d[n+10],9,38016083),m,f,d[n+15],14,-660478335),i,m,d[n+4],20,-405537848),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+9],5,568446438),f,r,d[n+14],9,-1019803690),m,f,d[n+3],14,-187363961),i,m,d[n+8],20,1163531501),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+13],5,-1444681467),f,r,d[n+2],9,-51403784),m,f,d[n+7],14,1735328473),i,m,d[n+12],20,-1926607734),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+5],4,-378558),f,r,d[n+8],11,-2022574463),m,f,d[n+11],16,1839030562),i,m,d[n+14],23,-35309556),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+1],4,-1530992060),f,r,d[n+4],11,1272893353),m,f,d[n+7],16,-155497632),i,m,d[n+10],23,-1094730640),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+13],4,681279174),f,r,d[n+0],11,-358537222),m,f,d[n+3],16,-722521979),i,m,d[n+6],23,76029189),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+9],4,-640364487),f,r,d[n+12],11,-421815835),m,f,d[n+15],16,530742520),i,m,d[n+2],23,-995338651),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+0],6,-198630844),f,r,d[n+7],10,1126891415),m,f,d[n+14],15,-1416354905),i,m,d[n+5],21,-57434055),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+12],6,1700485571),f,r,d[n+3],10,-1894986606),m,f,d[n+10],15,-1051523),i,m,d[n+1],21,-2054922799),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+8],6,1873313359),f,r,d[n+15],10,-30611744),m,f,d[n+6],15,-1560198380),i,m,d[n+13],21,1309151649),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+4],6,-145523070),f,r,d[n+11],10,-1120210379),m,f,d[n+2],15,718787259),i,m,d[n+9],21,-343485551),m=safe_add(m,h),f=safe_add(f,t),r=safe_add(r,g),i=safe_add(i,e)}return Array(m,f,r,i)}function md5_cmn(d,_,m,f,r,i){return safe_add(bit_rol(safe_add(safe_add(_,d),safe_add(f,i)),r),m)}function md5_ff(d,_,m,f,r,i,n){return md5_cmn(_&m|~_&f,d,_,r,i,n)}function md5_gg(d,_,m,f,r,i,n){return md5_cmn(_&f|m&~f,d,_,r,i,n)}function md5_hh(d,_,m,f,r,i,n){return md5_cmn(_^m^f,d,_,r,i,n)}function md5_ii(d,_,m,f,r,i,n){return md5_cmn(m^(_|~f),d,_,r,i,n)}function safe_add(d,_){var m=(65535&d)+(65535&_);return(d>>16)+(_>>16)+(m>>16)<<16|65535&m}function bit_rol(d,_){return d<<_|d>>>32-_}
