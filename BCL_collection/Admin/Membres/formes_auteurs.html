@@ -16,14 +16,15 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 <!-- copier/coller dans HAL le code ci-dessous : -->
 
 <p><strong>Formes auteurs des membres du labo ayant au moins une publication dans HAL :</strong></p>
-<script src="https://hal.archives-ouvertes.fr/BCL/public/lazy.js"></script>
+<script src="../public/lazy.js"></script>
+<script src="../public/config.js"></script>
 <p id="mybiblio-requirements" class="alert alert-fixed alert-danger">Pour continuer, vous devez activer Javascript dans votre navigateur internet, puis recharger cette page.<br />Please enable Javascript in your browser, then reload this page.</p>
 <aside class="legende" style="display:none;"><strong>Légende&nbsp;:</strong>
 <div class="parti">Membre parti du laboratoire</div>
 <div class="idhal-manquant">Idhal manquant</div>
 <div class="inconnu">Inconnu (absent de la liste des membres du labo)<br/><i>=&gt; Vérifier que le prénom est bien renseigné en entier.</i></div>
 </aside>
-<table id='liste_membres_BCL'>
+<table id='liste_membres_labo'>
 </table>
 <script>// <![CDATA[
 
@@ -57,10 +58,10 @@ var author_forms_localization = {
 	$("#mybiblio-requirements").removeClass('alert-danger');
 	$("#mybiblio-requirements").addClass('alert-warning');
 	$("#mybiblio-requirements").addClass('loading');
-	$.when (getMembresBCL(function(liste) {listeMembres=liste;}, function(errno) {
-			$('#liste_membres_BCL').html("<tr><td>Une erreur est survenue lors de la recuperation de la liste des membres du labo.</td></tr>");
-		}), getFormesAuteurs("BCL", [199944, 107319], function(liste, w) {listeFormesAuteurs=liste; warnings=w}, function(errno) {
-			$('#liste_membres_BCL').html("<tr><td>Une erreur est survenue lors de la recuperation des formes auteurs.</td></tr>");
+	$.when (getMembresLabo(function(liste) {listeMembres=liste;}, function(errno) {
+			$('#liste_membres_labo').html("<tr><td>Une erreur est survenue lors de la recuperation de la liste des membres du labo.</td></tr>");
+		}), getFormesAuteurs(my_config.code_collection, my_config.codes_structures_labo, function(liste, w) {listeFormesAuteurs=liste; warnings=w}, function(errno) {
+			$('#liste_membres_labo').html("<tr><td>Une erreur est survenue lors de la recuperation des formes auteurs.</td></tr>");
 		}, facet_limit)
 	).done(function (response1, response2) {
 		
@@ -145,7 +146,7 @@ var author_forms_localization = {
 				output_code=output_code+"<td"+(!membre_officiel? " class='inconnu'":"")+">"+forme_auteur.name+"</td>";
 				output_code=output_code+"<td>"+(forme_auteur.idhal==""?"":'<span class="glyphicon glyphicon-user" data-toggle="tooltip" data-placement="auto" data-original-title="IdHal de l\'auteur"></span>&nbsp;')+forme_auteur.idhal+"</td>";
 				var name = forme_auteur.name.split(/\s/);
-				output_code=output_code+"<td><a target='blank' class='btn "+(forme_auteur.nb_depots>0?"btn-primary":"btn-default")+" btn-xs pull-right' href='https://hal.archives-ouvertes.fr/BCL/search/index/?"+ ( forme_auteur.idhal=="" ? "qa%5BauthFullName_s%5D%5B%5D=%22"+encodeURIComponent(name[name.length-1]+" "+name.splice(0,name.length-1).join(" "))+"%22" : "&qa%5BauthIdHal_s%5D%5B%5D="+forme_auteur.idhal ) + "&submit_advanced=Rechercher&rows=30'>"+forme_auteur.nb_depots+"</a></td>";
+				output_code=output_code+"<td><a target='blank' class='btn "+(forme_auteur.nb_depots>0?"btn-primary":"btn-default")+" btn-xs pull-right' href='https://hal.archives-ouvertes.fr/"+my_config.code_collection+"/search/index/?"+ ( forme_auteur.idhal=="" ? "qa%5BauthFullName_s%5D%5B%5D=%22"+encodeURIComponent(name[name.length-1]+" "+name.splice(0,name.length-1).join(" "))+"%22" : "&qa%5BauthIdHal_s%5D%5B%5D="+forme_auteur.idhal ) + "&submit_advanced=Rechercher&rows=30'>"+forme_auteur.nb_depots+"</a></td>";
 				output_code=output_code+(membre.date_arrivee?"<td>"+membre.date_arrivee:"<td>")+"</td>";
 				output_code=output_code+(membre.date_depart?"<td class='parti'>"+membre.date_depart:"<td>")+"</td></tr>";
 				return true;
@@ -153,7 +154,7 @@ var author_forms_localization = {
 		});
 		
 		if (output_code!="") {
-			$('#liste_membres_BCL').html("<thead><tr><th>Nom Prénom</th><th>idhal_s</th><th>dépôts</th><th>Arrivé le</th><th>Parti le</th></tr></thead><tbody>"+output_code+"</tbody>");
+			$('#liste_membres_labo').html("<thead><tr><th>Nom Prénom</th><th>idhal_s</th><th>dépôts</th><th>Arrivé le</th><th>Parti le</th></tr></thead><tbody>"+output_code+"</tbody>");
 		}
 		if (doublons_sans_idhal.length>0) {
 			var query = "("+encodeURIComponent(doublons_sans_idhal[0].name)+")";
@@ -163,7 +164,7 @@ var author_forms_localization = {
 			for (var i = 0; i < doublons_sans_idhal.length; i++) {
 				$('tr#doublon-'+validClassName(doublons_sans_idhal[i].name)+' td:nth-child(3)').html(doublons_sans_idhal[i].nb_depots);
 			}
-			$.ajax("https://api.archives-ouvertes.fr/search/BCL", {data: 'q=authFullName_t:'+query+'&rows=0&wt=json&facet=true&facet.field=authIdHasStructure_fs&facet.mincount=1&facet.limit='+facet_limit, dataType: 'json', jsonp: false, success: function( d ) {
+			$.ajax("https://api.archives-ouvertes.fr/search/"+my_config.code_collection, {data: 'q=authFullName_t:'+query+'&rows=0&wt=json&facet=true&facet.field=authIdHasStructure_fs&facet.mincount=1&facet.limit='+facet_limit, dataType: 'json', jsonp: false, success: function( d ) {
 			  var reponses = d.facet_counts.facet_fields.authIdHasStructure_fs;
 			  if (reponses !== undefined) {
   				  var index_authors = {};
@@ -176,7 +177,7 @@ var author_forms_localization = {
 				    }
 				  }
 	  			  for (var i = 0; i < doublons_sans_idhal.length; i++) {
-				  		$('tr#doublon-'+validClassName(doublons_sans_idhal[i].name)+' td:nth-child(3)').html( ( index_authors[doublons_sans_idhal[i].name] ? "<a target='blank' class='btn btn-default btn-xs pull-right' href='https://hal.archives-ouvertes.fr/BCL/search/index/q/authId_i%3A"+index_authors[doublons_sans_idhal[i].name]+"/rows/30/'>"+doublons_sans_idhal[i].nb_depots+"</a>" : doublons_sans_idhal[i].nb_depots ) );
+				  		$('tr#doublon-'+validClassName(doublons_sans_idhal[i].name)+' td:nth-child(3)').html( ( index_authors[doublons_sans_idhal[i].name] ? "<a target='blank' class='btn btn-default btn-xs pull-right' href='https://hal.archives-ouvertes.fr/"+my_config.code_collection+"/search/index/q/authId_i%3A"+index_authors[doublons_sans_idhal[i].name]+"/rows/30/'>"+doublons_sans_idhal[i].nb_depots+"</a>" : doublons_sans_idhal[i].nb_depots ) );
 				  }
 			  }
 			  $('#mybiblio-requirements').html("");
@@ -192,5 +193,6 @@ var author_forms_localization = {
 		}
 	});
 // ]]></script>
+
 </body>
 </html>

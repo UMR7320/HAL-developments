@@ -17,13 +17,14 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 
 <p><strong>Membres du labo ayant au moins un compte utilisateur dans HAL :</strong></p>
 <p id="mybiblio-requirements" class="alert alert-fixed alert-danger">Pour continuer, vous devez activer Javascript dans votre navigateur internet, puis recharger cette page.<br />Please enable Javascript in your browser, then reload this page.</p>
+<script src="../public/config.js"></script>
 <aside class="legende" style="display:none;"><strong>Légende&nbsp;:</strong>
 <div class="bdd-labo">Infos issues de la BDD du labo</div>
 <div class="bdd-hal">Infos issues de HAL</div>
 </aside>
 <div style="display:none;" id="show_empty_lines">
 <input type="checkbox" id="show_empty_lines_checkbox" checked="checked" /><label for="show_empty_lines_checkbox"></label></div>
-<table id="liste_membres_BCL">
+<table id="liste_membres_labo">
 </table>
 <script>// <![CDATA[
 
@@ -52,7 +53,7 @@ var user_accounts_localization = {
 	$("#mybiblio-requirements").removeClass('alert-danger');
 	$("#mybiblio-requirements").addClass('alert-warning');
 	$("#mybiblio-requirements").addClass('loading');
-	$.when (getMembresBCL(function(liste) {listeMembres=liste;}, function(errno) {
+	$.when (getMembresLabo(function(liste) {listeMembres=liste;}, function(errno) {
 			$('#mybiblio-requirements').html(user_accounts_localization['searching_bdd_err'][lang]);
 			$("#mybiblio-requirements").addClass('alert-danger');
 			$("#mybiblio-requirements").removeClass('alert-warning');
@@ -70,7 +71,7 @@ var user_accounts_localization = {
 			bdd_content="<thead><tr>"+bdd_content+"<th class='bdd-hal'>user_id</th><th class='bdd-hal'>user_name (Nom Prénom)</th><th class='bdd-hal'>email</th><th class='bdd-hal'>raw_label</th></tr></thead>";
 		}
 		bdd_content=bdd_content+"<tbody></tbody>";
-		$('#liste_membres_BCL').html(bdd_content);
+		$('#liste_membres_labo').html(bdd_content);
 		$('aside.legende').show();
 		var nbRecherchesJusqueIci = 0;
 		listeMembres.forEach(function(membre) {
@@ -100,12 +101,12 @@ var user_accounts_localization = {
 				   	  }
 				      if (found) {
 				        accounts_found++;		          
-				        $('#liste_membres_BCL > tbody:last-child').append('<tr>'+bdd_content+'<td class="bdd-hal"><span class="badge">'+r.user_id+'</span></td><td class="bdd-hal">'+r.user_name+'</td><td class="bdd-hal address">'+r.email+'</td><td class="bdd-hal">'+r.label+'</td></tr>');
+				        $('#liste_membres_labo > tbody:last-child').append('<tr>'+bdd_content+'<td class="bdd-hal"><span class="badge">'+r.user_id+'</span></td><td class="bdd-hal">'+r.user_name+'</td><td class="bdd-hal address">'+r.email+'</td><td class="bdd-hal">'+r.label+'</td></tr>');
 				      }
 				    }); // result.forEach() 
 				} // result not null
 				if (!accounts_found) {
-				  $('#liste_membres_BCL > tbody:last-child').append('<tr class="empty-line">'+bdd_content+'<td></td><td></td></tr>');
+				  $('#liste_membres_labo > tbody:last-child').append('<tr class="empty-line">'+bdd_content+'<td></td><td></td></tr>');
 				}
 				nbRecherchesJusqueIci++;
 				if (nbRecherchesJusqueIci >= listeMembres.length) {

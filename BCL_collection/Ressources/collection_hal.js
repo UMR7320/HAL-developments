@@ -1,18 +1,8 @@
 
+var my_config={}; // les paramètres configurables par le gestionnaire de la collection se trouvent dans le fichier config.js
+$.getScript("../public/config.js");
+
 $.getScript("//static.ccsd.cnrs.fr/js/jquery/ui/autocomplete.html.js"); // permet d'activer le rendu HTML sur les popups d'autocomplete Jquery UI (tel que le fait le CCSD sur les autres pages de la plateforme HAL)
-
-// personnalisation du menu de navigation HAL (navbar fixed) :
-$("body > div.navbar > div.navbar-collapse > ul.navbar-nav > li:last-child").before("<li class='ladoc active'><a href='https://hal.archives-ouvertes.fr/section/documentation' title='Documentation HAL' style='font-weight: bold;'>Doc</a></li>");
-
-// personnalisation de l'encart en haut à droite (lorsque l'utilisateur est connecte) :
-$("body > div.navbar > div.navbar-collapse > div.navbar-right > ul > li > ul > li:first-child > table td.text-left a").removeClass();
-$("body > div.navbar > div.navbar-collapse > div.navbar-right > ul > li > ul > li:first-child > table td.text-left a:first-of-type").replaceWith("<a href='https://hal.archives-ouvertes.fr/user/space' class='btn btn-primary btn-xs'>Mon espace</a> <a href='https://hal.archives-ouvertes.fr/user/submissions' class='btn btn-primary btn-xs'>Mes d&eacute;p&ocirc;ts</a>");
-
-// personnalisation des _blank sur les liens hypertextes (une fois la page finie de charger) :
-$(function(){
-    $(".logo td:last-child a").attr("target","");
-    $("#container .sidebar-nav > ul > li:nth-last-child(2):not(.dropdown) > a").attr("target","_blank"); 
-});
 
 // boite à outils :
 var defaultDiacriticsRemovalMap = [
@@ -117,8 +107,18 @@ function getCurrentLanguage(defaultLanguage) {
     return (document.documentElement.lang ? document.documentElement.lang : defaultLanguage);
 }
 
-function getMembresBCL(callback_success, callback_error) {
-    return $.ajax("https://bcl.cnrs.fr/spip.php", {data: 'page=json&id_rubrique=2&membres&var_mode=calcul', dataType: 'json', jsonp: false, error: function() {        
+function getMembresLabo(callback_success, callback_error) {
+	if (!my_config.url_membres_labo) {
+		callback_error(-2);
+		return;
+	}
+	var url_membres = my_config.url_membres_labo.split("?");
+	url_membres.push("");
+	if (url_membres[0]=="") {
+		callback_error(-2);
+		return;
+	}
+	return $.ajax(url_membres[0], {data: url_membres[1], dataType: 'json', jsonp: false, error: function() {        
         callback_error(-1);
     }, success: function( liste ) {
       callback_success(liste);

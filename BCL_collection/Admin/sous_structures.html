@@ -16,15 +16,17 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 
 <!-- copier/coller dans HAL le code ci-dessous : -->
 
-<div id="bcl-structures">Vous devez activer javascript dans votre navigateur internet puis recharger cette page.</div>
+<div id="labo-structures">Vous devez activer javascript dans votre navigateur internet puis recharger cette page.</div>
+<script src="../public/config.js"></script>
 <script>// <![CDATA[	
 	var use_lang="en";
-	$("#bcl-structures").html("Recherche en cours...");
-	getStructures("(acronym_t:BCL+OR+parentAcronym_t:BCL+OR+code_s:(UMR7320+OR+UMR6039)+OR+name_t:(Bases+Corpus+Langage)+OR+parentName_t:(Bases+Corpus+Langage))", function(raw_data, structures_index, structures_tree, original_query) {
-		$("#bcl-structures").html("<div class='structure-arborescence'>"+writeStructures(structures_tree, 0, use_lang)+"</div>");		
+	$("#labo-structures").html("Recherche en cours...");
+	getStructures(my_config.critere_sous_structures, function(raw_data, structures_index, structures_tree, original_query) {
+		$("#labo-structures").html("<div class='structure-arborescence'>"+writeStructures(structures_tree, 0, use_lang)+"</div>");		
 	}, function(errno, original_query) {		
-		$("#bcl-structures").html("Une erreur s'est produite.");
+		$("#labo-structures").html("Une erreur s'est produite.");
 	});
 // ]]></script>
+
 </body>
 </html>

@@ -1,6 +1,6 @@
 @CHARSET "UTF-8";
 
-/* CSS utilisé sur la plateforme HAL pour personnaliser notre collection BCL */
+/* CSS utilisé sur la plateforme HAL pour personnaliser notre collection HAL */
 
 /* Le contenu de ce fichier est à copier-coller tel quel (dans le menu Privileges > Site Web > Apparence > Feuille de styles) 
 
@@ -266,31 +266,31 @@ background-color: inherit;
 color:black;
 text-decoration:none;
 }
-div#bcl-structures .btn-primary,
-#liste_membres_BCL .btn-primary
+div#labo-structures .btn-primary,
+#liste_membres_labo .btn-primary
  {
 color: #ffffff;
 background-color: #428bca;
 border-color: #357ebd;
 }
-div#bcl-structures .btn-default:hover,
-div#bcl-structures .btn-default:focus,
-#liste_membres_BCL .btn-default:hover,
-#liste_membres_BCL .btn-default:focus {
+div#labo-structures .btn-default:hover,
+div#labo-structures .btn-default:focus,
+#liste_membres_labo .btn-default:hover,
+#liste_membres_labo .btn-default:focus {
 color: #333333;
 background-color: #ebebeb;
 border-color: #adadad;
 }
-div#bcl-structures .btn-primary:hover,
-div#bcl-structures .btn-primary:focus,
-#liste_membres_BCL .btn-primary:hover,
-#liste_membres_BCL .btn-primary:focus {
+div#labo-structures .btn-primary:hover,
+div#labo-structures .btn-primary:focus,
+#liste_membres_labo .btn-primary:hover,
+#liste_membres_labo .btn-primary:focus {
 color: #ffffff;
 background-color: #3276b1;
 border-color: #285e8e;
 }
-div#bcl-structures a:hover,
-#liste_membres_BCL a:focus {
+div#labo-structures a:hover,
+#liste_membres_labo a:focus {
 text-decoration:underline;
 }
 /* fin de la surcharge de la charte graphique de HAL */
@@ -396,37 +396,37 @@ height: 40px; /* min-height doesn't work on table cells */
 margin: 5% 0;
 }
 
-/* tableau formes auteurs des membres de BCL : */
-table#liste_membres_BCL {
+/* tableau formes auteurs des membres du labo : */
+table#liste_membres_labo {
 border-collapse: collapse;
 border:1px solid black;
 min-width: 520px;
 }
-table#liste_membres_BCL th {
+table#liste_membres_labo th {
 padding: 5px 5px;
 border-bottom:1px solid black;
 }
-table#liste_membres_BCL td {
+table#liste_membres_labo td {
 padding: 2px 5px;
 border-bottom:1px solid #cccccc;
 }
-table#liste_membres_BCL td:nth-child(3) {
+table#liste_membres_labo td:nth-child(3) {
 text-align: right;
 padding-right: 15px;
 }
-table#liste_membres_BCL td:nth-child(3) .pull-right {
+table#liste_membres_labo td:nth-child(3) .pull-right {
 position:relative;
 right:-5px;
 }
-table#liste_membres_BCL tr.parti,
+table#liste_membres_labo tr.parti,
 .legende .parti {
 background:lightgrey;
 }
-table#liste_membres_BCL tr td.inconnu,
+table#liste_membres_labo tr td.inconnu,
 .legende .inconnu {
 background-color: red;
 }
-table#liste_membres_BCL tr.idhal-manquant td:not(:first-child),
+table#liste_membres_labo tr.idhal-manquant td:not(:first-child),
 .legende .idhal-manquant {
 background-color: orange;
 }
@@ -469,52 +469,52 @@ tr.old td:not(.bdd-labo) {
 }
 
 /* arborescence du référentiel structures : */
-div#bcl-structures blockquote {
+div#labo-structures blockquote {
 border: 5px solid #eeeeee;
 cursor: pointer;
 }
-div#bcl-structures blockquote.statut-INCOMING {
+div#labo-structures blockquote.statut-INCOMING {
 border: 5px solid red !important;
 }
-div#bcl-structures blockquote.statut-VALID {
+div#labo-structures blockquote.statut-VALID {
 border: 5px solid #dff0d8;
 }
-div#bcl-structures blockquote.statut-OLD {
+div#labo-structures blockquote.statut-OLD {
 border: 5px solid #f7e199;
 }
-div#bcl-structures blockquote:hover,
-div#bcl-structures .structure-element-researchteam:hover {
+div#labo-structures blockquote:hover,
+div#labo-structures .structure-element-researchteam:hover {
 background-color: #d9edf7;
     /* border-color: #bce8f1; */
 }
-div#bcl-structures .structure-element-researchteam:hover h6 {
+div#labo-structures .structure-element-researchteam:hover h6 {
     color: #31708f;
 }
-div#bcl-structures .structure-element-department:hover {
+div#labo-structures .structure-element-department:hover {
  background-color: #dff0d8;
     /* border-color: #d6e9c6; */
 }
-div#bcl-structures .structure-element-department:hover h6 {
+div#labo-structures .structure-element-department:hover h6 {
     color: #3c763d;
 }
-div#bcl-structures .structure-element-laboratory:hover {
+div#labo-structures .structure-element-laboratory:hover {
 background-color: #fcf8e3;
     /* border-color: #faebcc; */
 }
-div#bcl-structures .structure-element-laboratory:hover h6 {
+div#labo-structures .structure-element-laboratory:hover h6 {
     color: #8a6d3b;
 }
-div#bcl-structures .structure-element-institution:hover {
+div#labo-structures .structure-element-institution:hover {
 background-color: #f2dede;
     /* border-color: #ebccd1; */
 }
-div#bcl-structures .structure-element-institution:hover h6 {
+div#labo-structures .structure-element-institution:hover h6 {
     color: #a94442;
 }
-div#bcl-structures .badge {
+div#labo-structures .badge {
 margin-left:5px;
 }
-div#bcl-structures .bounds {
+div#labo-structures .bounds {
 content: " ";
 text-align: right;
 height: 40px;
@@ -524,25 +524,25 @@ padding-left : 0px;
 margin-left  : 0px; 
 margin-right : 0px;
 }
-div#bcl-structures .b_vertical {
+div#labo-structures .b_vertical {
 position: absolute;
 border-left: 3px solid rgb(51, 51, 51); 
 left: 30px;
 }
-div#bcl-structures .b_horizontal {
+div#labo-structures .b_horizontal {
 position: absolute;
 border-bottom: 3px solid rgb(51, 51, 51);
 left: 30px;
 }
-div#bcl-structures .arrow {
+div#labo-structures .arrow {
 top: 30px; 
 font-size: 9px;
 }
-div#bcl-structures .code {
+div#labo-structures .code {
 position: absolute; 
 top: 30px;
 }
-div#bcl-structures div.boutons_supplementaires {
+div#labo-structures div.boutons_supplementaires {
 float:right;
 }
 /* fin de l'arborescence du référentiel structures */
