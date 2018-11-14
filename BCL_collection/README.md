@@ -26,6 +26,8 @@ La librairie Jquery est également utilisée, mais on utilise ici celle qui est 
 
 # Installation #
 
+0. Editer le fichier config.js qui se trouve dans le dossier Ressources/ : il contient tous les paramètres à configurer pour votre collection HAL (code de la collection, URL, etc.)
+
 1. Les fichiers contenus dans le dossier Ressources/ doivent être uploadés manuellement, un par un, sur votre Collection HAL, par le biais du menu Privileges > Site Web > Ressources (accessible uniquement aux personnes qui sont gestionnaires de la collection). Notamment et surtout le fichier `collection_hal.js` qui contient toutes les primitives javascript permettant de travailler sur les données de la collection (ainsi que le fichier `lazy.js` qui contient une bibliothèque javascript requise pour le bon fonctionnement de `collection_hal.js`).
 
 2. Pour que le javascript contenu dans `collection_hal.js` soit bien chargé et executé sur chaque page de la collection HAL, nous allons avoir recours à une astuce, qui consiste à injecter une balise `<script>` dans le bandeau situé en haut de la page web, qui contient le nom de la collection. Pour cela, on passe par le biais du menu Privileges > Site Web > En-tête > ajouter un élément de type texte, qui va contenir dans le champ "libellé" uniquement cette balise `<script>...</script>` (y copier/coller la balise script contenue dans le fichier `header.html` ci-joint). Oui, c'est sale, mais ça fonctionne :-)
