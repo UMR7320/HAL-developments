@@ -242,18 +242,23 @@ if (!currentUser.is_connected()) {
 	$("#mybiblio-requirements").addClass('alert-warning');
 	$("#mybiblio-requirements").show();
 } else {
-	currentUser.retrieve_idhal(function(idhal_s, idhal_i) {		
+	currentUser.retrieve(function(uid, idhal_s) {		
 		if (idhal_s=="") {
 			$("#myidhal").html("");
 			$("#mybiblio-requirements").html(retrieve_bibliography_localization['idhal_required'][lang].replace("<a>", "<a href='https://hal.archives-ouvertes.fr/user/idhal/' class='btn btn-sm btn-success'><span class='glyphicon glyphicon-pencil'></span></i> "));
 			$("#mybiblio-requirements").removeClass('loading');
 			$("#mybiblio-requirements").addClass('alert-warning');
 		} else {
-			$("#myidhal").html("IdHAL"+(idhal_i>0?" "+idhal_i:"")+"&nbsp;: <a title='"+translated_attr('find_all').replace("[IDHAL]", idhal_s)+"' href='https://hal.archives-ouvertes.fr/search/index/q/authIdHal_s%3A%22"+idhal_s+"%22/'>"+idhal_s+"</a>");
+			$("#myidhal").html("IdHAL"+((typeof idhal_i)!=="undefined" && idhal_i>0?" "+idhal_i:"")+"&nbsp;: <a title='"+translated_attr('find_all').replace("[IDHAL]", idhal_s)+"' href='https://hal.archives-ouvertes.fr/search/index/q/authIdHal_s%3A%22"+idhal_s+"%22/'>"+idhal_s+"</a>");
 			$("#hal-search-by-idhal").attr("title",retrieve_bibliography_localization['find_all'][lang].replace("[IDHAL]", idhal_s));
 			$("#hal-search-by-idhal").attr("href","https://hal.archives-ouvertes.fr/search/index/q/authIdHal_s%3A%22"+idhal_s+"%22/");
 			$("#idhal-search-in-aurehal").attr("href","https://aurehal.archives-ouvertes.fr/author/browse?critere=idHal_s%3A"+idhal_s);
-			retrieve_bibliography_by_idhal(idhal_s, currentUser.retrieve_screen_name());
+			var nom_complet = "";
+			if (currentUser.firstname && currentUser.lastname)
+				nom_complet = currentUser.firstname + " "+ currentUser.lastname;
+			else 
+				nom_complet = currentUser.screen_name();
+			retrieve_bibliography_by_idhal(idhal_s, nom_complet);
 		}
 	});
 }

@@ -116,13 +116,14 @@ currentUser.is_connected = function () {
 
 // retrieves current user's screen name
 // Note : returns "" if not connected -> see currentUser.is_connected()
-currentUser.retrieve_screen_name = function () {
-	return $('body > .navbar-fixed-top > .navbar-collapse > div.navbar-right > ul > li > a').text();
+currentUser.screen_name = function () {
+	currentUser.screen_name = $('body > .navbar-fixed-top > .navbar-collapse > div.navbar-right > ul > li > a').text();
+	return currentUser.screen_name;
 }
 
 // retrieves current user's user id (and idhal_s if present)
 // Requirements: user must alreaby be connected on HAL -> see currentUser.is_connected()
-currentUser.retrieve_uid = function (callback) {
+currentUser.retrieve = function (callback) {
 	var user_id = 0;
 	var idhal_s = "";
 	$.get("https://hal.archives-ouvertes.fr/user/", "lang=fr", function(htmlText, status, jqxhr) {
@@ -134,14 +135,24 @@ currentUser.retrieve_uid = function (callback) {
 				var htmlFragment = $.parseHTML(htmlText.substring(pos, htmlText.indexOf('</form>', pos) +7))[0].getElementsByClassName('control-label');
 				for (var i = 0; i < htmlFragment.length; i++) {
 					var e = htmlFragment[i];
-					if (e.innerText == "Identifiant") {
-						var fcs = e.parentNode.getElementsByClassName('form-control-static');
-						if (fcs.length == 1) {
+					var fcs = e.parentNode.getElementsByClassName('form-control-static');
+					if (fcs.length == 1) {
+						if (e.innerText == "Identifiant") {
 							user_id = parseInt(fcs[0].innerText, 10);
 							if (user_id != fcs[0].innerText)
 								user_id = 0;
 							else
 								currentUser.uid = user_id;
+						} else if (e.innerText == "Login") {
+							currentUser.login = fcs[0].innerText;
+						} else if (e.innerText == "Civilité") {
+							currentUser.title = fcs[0].innerText;
+						} else if (e.innerText == "Nom de famille") {
+							currentUser.lastname = fcs[0].innerText;
+						} else if (e.innerText == "Prénom") {
+							currentUser.firstname = fcs[0].innerText;
+						} else if (e.innerText == "Courriel") {
+							currentUser.email = fcs[0].innerText;
 						}
 					}
 				}
@@ -151,11 +162,13 @@ currentUser.retrieve_uid = function (callback) {
 					var htmlFragment = $.parseHTML(htmlText.substring(pos, htmlText.indexOf('</form>', pos) +7))[0].getElementsByClassName('control-label');
 					for (var i = 0; i < htmlFragment.length; i++) {
 						var e = htmlFragment[i];
-						if (e.innerText.match(/IdHal/)) {
-							var fcs = e.parentNode.getElementsByClassName('form-control-static');
-							if (fcs.length == 1) {
+						var fcs = e.parentNode.getElementsByClassName('form-control-static');
+						if (fcs.length == 1) {
+							if (e.innerText.match(/IdHal/)) {
 								idhal_s = fcs[0].firstElementChild.innerText;
 								currentUser.idhal_s = idhal_s;
+							} else if (e.innerText.match(/Votre nom dans HAL/)) {
+								currentUser.screen_name = fcs[0].innerText;
 							}
 						}
 					}
