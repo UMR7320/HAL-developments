@@ -107,6 +107,111 @@ function getCurrentLanguage(defaultLanguage) {
     return (document.documentElement.lang ? document.documentElement.lang : defaultLanguage);
 }
 
+var currentUser = {};
+
+// check if current user is currently logged in
+currentUser.is_connected = function () {
+	return ($(".navbar-fixed-top div.navbar-right > ul").length>0);
+}
+
+// retrieves current user's screen name
+// Note : returns "" if not connected -> see currentUser.is_connected()
+currentUser.retrieve_screen_name = function () {
+	return $('body > .navbar-fixed-top > .navbar-collapse > div.navbar-right > ul > li > a').text();
+}
+
+// retrieves current user's user id (and idhal_s if present)
+// Requirements: user must alreaby be connected on HAL -> see currentUser.is_connected()
+currentUser.retrieve_uid = function (callback) {
+	var user_id = 0;
+	var idhal_s = "";
+	$.get("https://hal.archives-ouvertes.fr/user/", "lang=fr", function(htmlText, status, jqxhr) {
+		if (jqxhr.status != 200) {
+			console.log("ERROR: /user/ returned unexpected HTTP status code "+jqxhr.status);
+		} else {
+			pos = htmlText.indexOf('<form class="form-horizontal"');	
+			if (pos > 0) {
+				var htmlFragment = $.parseHTML(htmlText.substring(pos, htmlText.indexOf('</form>', pos) +7))[0].getElementsByClassName('control-label');
+				for (var i = 0; i < htmlFragment.length; i++) {
+					var e = htmlFragment[i];
+					if (e.innerText == "Identifiant") {
+						var fcs = e.parentNode.getElementsByClassName('form-control-static');
+						if (fcs.length == 1) {
+							user_id = parseInt(fcs[0].innerText, 10);
+							if (user_id != fcs[0].innerText)
+								user_id = 0;
+							else
+								currentUser.uid = user_id;
+						}
+					}
+				}
+		
+				pos = htmlText.indexOf('<form class="form-horizontal"', pos + 1);	
+	if (pos > 0) {
+					var htmlFragment = $.parseHTML(htmlText.substring(pos, htmlText.indexOf('</form>', pos) +7))[0].getElementsByClassName('control-label');
+					for (var i = 0; i < htmlFragment.length; i++) {
+						var e = htmlFragment[i];
+						if (e.innerText.match(/IdHal/)) {
+							var fcs = e.parentNode.getElementsByClassName('form-control-static');
+							if (fcs.length == 1) {
+								idhal_s = fcs[0].firstElementChild.innerText;
+								currentUser.idhal_s = idhal_s;
+							}
+						}
+					}
+				}
+			}
+		}
+	}, "html" ).fail(function () {
+		console.log("ERROR: GET /user/ failed.");
+	}).done(function () {
+		// code à faire une fois que tout est terminé (par exemple appeler la callback qui nous avait été passée en paramètres) - cette section est toujours executée, quel que soit l'issue de ce .get()
+		callback(user_id, idhal_s);
+	});
+}
+
+// retrieves current user's idhal (idhal_i and idhal_s)
+// Requirements: user must alreaby be connected on HAL -> see currentUser.is_connected()
+currentUser.retrieve_idhal = function (callback) {
+	var idhal_i = 0;
+	var idhal_s = "";
+	$.get("https://hal.archives-ouvertes.fr/user/idhal/", "lang=fr", function(htmlText, status, jqxhr) {
+		if (jqxhr.status != 200) {
+			console.log("ERROR: /user/idhal/ returned unexpected HTTP status code "+jqxhr.status);
+		} else {
+			pos = htmlText.indexOf('<input type="hidden" name="idhal"');	
+			if (pos > 0) {
+				idhal_i = $($.parseXML(htmlText.substring(pos, htmlText.indexOf('>', pos) +1))).children('input').attr('value');
+				currentUser.idhal_i = idhal_i;
+			}
+		
+			pos = htmlText.indexOf('<input type="text" name="uri" id="uri"');
+			if (pos > 0) {
+				idhal_s = $($.parseXML(htmlText.substring(pos, htmlText.indexOf('>', pos) +1))).children('input').attr('value');
+				currentUser.idhal_s = idhal_s;
+			}
+		}
+	}, "html" ).fail(function () {
+		console.log("ERROR: GET /user/idhal/ failed.");
+	}).done(function () {
+		// code à faire une fois que tout est terminé (par exemple appeler la callback qui nous avait été passée en paramètres) - cette section est toujours executée, quel que soit l'issue de ce .get()
+		if (idhal_s == "") {
+			// on a échoué => on essaye de s'y prendre autrement :
+			var fullname = currentUser.retrieve_screen_name().trim();
+			getIdHAL(my_config.code_collection, fullname, function(idhal_i, idhal_s, original_name) {
+				currentUser.idhal_s = idhal_s;
+				if (idhal_i >= 0)
+					currentUser.idhal_i = idhal_i;
+				callback(idhal_s, idhal_i);
+			}, function(errno, original_name) {
+				callback(idhal_s, idhal_i);
+			});
+		} else {
+			callback(idhal_s, idhal_i);
+		}
+	});
+}
+
 function getMembresLabo(callback_success, callback_error) {
 	if (!my_config.url_membres_labo) {
 		callback_error(-2);
