@@ -18,9 +18,10 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 <p><strong>Membres du labo ayant au moins un compte utilisateur dans HAL :</strong></p>
 <p id="mybiblio-requirements" class="alert alert-fixed alert-danger">Pour continuer, vous devez activer Javascript dans votre navigateur internet, puis recharger cette page.<br />Please enable Javascript in your browser, then reload this page.</p>
 <script src="../public/config.js"></script>
-<aside class="legende" style="display:none;"><strong>Légende&nbsp;:</strong>
+<aside class="legende" style="display:none; max-width:400px;"><strong>Légende&nbsp;:</strong>
 <div class="bdd-labo">Infos issues de la BDD du labo</div>
 <div class="bdd-hal">Infos issues de HAL</div>
+<div class="bdd-hal unsure-match">Infos issues de HAL, mais avec une incertitude sur la correspondance BDD &lt;-&gt; HAL (les champs nom/prénom ne coïncident pas =&gt; est-ce bien la même personne ?)</div>
 </aside>
 <div style="display:none;" id="show_empty_lines">
 <input type="checkbox" id="show_empty_lines_checkbox" checked="checked" /><label for="show_empty_lines_checkbox"></label></div>
@@ -39,6 +40,8 @@ var user_accounts_localization = {
                       "en": "[Step 2/2]: Searching for HAL user accounts…"},
 "searching_bdd_err": {"fr": "Une erreur est survenue lors de la recuperation de la liste des membres du labo.",
                       "en": "An error occured while retrieving laboratory's members list."},
+"searching_sub_err": {"fr": "Erreur en recuperant les contributions de user_id [param].",
+                      "en": "Error retrieving contributions from user_id [param]."},
 "show_empty_lines":  {"fr": "Afficher aussi les membres pour lesquels on n'a pas trouvé de compte utilisateur HAL",
                       "en": "Also show members for which we did not find any HAL user account"},
 "user_id_mistmatch": {"fr": "Erreur: HAL a retourné 2 user_ids différents ([param] vs. [param2]) pour un même compte utilisateur.",
@@ -68,7 +71,7 @@ var user_accounts_localization = {
 		var bdd_content="";
 		if (listeMembres && listeMembres.length) {
 			Object.keys(listeMembres[0]).forEach(function (c) { bdd_content=bdd_content+"<th class='bdd-labo'>"+c+"</th>" });
-			bdd_content="<thead><tr>"+bdd_content+"<th class='bdd-hal'>user_id</th><th class='bdd-hal'>user_name (Nom Prénom)</th><th class='bdd-hal'>email</th><th class='bdd-hal'>raw_label</th></tr></thead>";
+			bdd_content="<thead><tr>"+bdd_content+"<th class='bdd-hal'>user_id</th><th class='bdd-hal'>user_name (Nom Prénom)</th><th class='bdd-hal'>email</th><th class='bdd-hal'>raw_label</th><th class='bdd-hal'>Dépôts HAL</th><th class='bdd-hal'>Premier dépôt dans HAL</th><th class='bdd-hal'>Dernier dépôt dans HAL</th></tr></thead>";
 		}
 		bdd_content=bdd_content+"<tbody></tbody>";
 		$('#liste_membres_labo').html(bdd_content);
@@ -76,7 +79,7 @@ var user_accounts_localization = {
 		var nbRecherchesJusqueIci = 0;
 		listeMembres.forEach(function(membre) {
 			var normalized_lastname = removeDiacritics(membre.nom).toLowerCase().replace(new RegExp("['\"\\`]", 'g'), "").split(/[^a-z]/)[0];
-			console.log("Recherche de "+ membre.nom + ", " + membre.prenom +"...");
+			/* console.log("Recherche de "+ membre.nom + ", " + membre.prenom +"..."); */
 						
 			getHALUser(membre.nom+"\t"+membre.prenom, function(result, warnings) { 
 				if (warnings && warnings.length)
@@ -93,15 +96,27 @@ var user_accounts_localization = {
 				if (result) {
 				   result.forEach(function (r) {
 				   	  var normalized_label = removeDiacritics(r.label).toLowerCase().replace(new RegExp("['\"\\`]", 'g'), "");
-				   	  var found = normalized_label.startsWith(normalized_lastname) && normalized_label.charAt(normalized_lastname.length).match(/\s|[\-_'’‛‘′]/);
+				   	  var found = (normalized_label.startsWith(normalized_lastname) && normalized_label.charAt(normalized_lastname.length).match(/\s|[\-_'’‛‘′]/))
+				   	           || (r.email && membre.email && removeDiacritics(r.email).toLowerCase() == removeDiacritics(membre.email).toLowerCase());
+				   	  var css_classes = "bdd-hal" + (found ? "" : " unsure-match");
 				   	  if (!found) {
-				   	  	// on tente de le repêcher par le biais de son email (au cas où, par ex. l'utilisateur aurait inversé les champs prenom et nom durant la création de son compte HAL - c'est du vécu !)
+				   	  	// on tente de le repêcher par différents moyens : son login, son email, son prenom/nom inversés (au cas où, par ex. l'utilisateur aurait inversé les champs prenom et nom durant la création de son compte HAL - c'est du vécu !)
 				   	    var normalized_firstname = removeDiacritics(membre.prenom).toLowerCase().replace(new RegExp("['\"\\`]", 'g'), "").split(/[^a-z]/)[0];
-				   	    found = r.email && removeDiacritics(r.email).toLowerCase().startsWith(normalized_firstname+"."+normalized_lastname);
+				   	    found = (r.email && removeDiacritics(r.email).toLowerCase().startsWith(normalized_firstname+"."+normalized_lastname))
+				   	         || (r.email && membre.login && removeDiacritics(r.email).toLowerCase().startsWith(membre.login+"@"))
+				   	         || (normalized_label.startsWith(normalized_firstname+" "+normalized_lastname) && normalized_label.charAt(normalized_firstname.length + 1 + normalized_lastname.length).match(/\s|[\-_'’‛‘′]/));
 				   	  }
 				      if (found) {
 				        accounts_found++;		          
-				        $('#liste_membres_labo > tbody:last-child').append('<tr>'+bdd_content+'<td class="bdd-hal"><span class="badge">'+r.user_id+'</span></td><td class="bdd-hal">'+r.user_name+'</td><td class="bdd-hal address">'+r.email+'</td><td class="bdd-hal">'+r.label+'</td></tr>');
+				        $('#liste_membres_labo > tbody:last-child').append('<tr id="author_'+parseInt(r.user_id, 10)+'" class="loading">'+bdd_content+'<td class="'+css_classes+'"><span class="badge">'+r.user_id+'</span></td><td class="'+css_classes+'">'+r.user_name+'</td><td class="'+css_classes+' address">'+r.email+'</td><td class="'+css_classes+'">'+r.label+'</td></tr>');
+				        getHALUserStats(r.user_id, function(result) {
+				        	result.user_id = parseInt(result.user_id, 10);
+				        	$('tr#author_'+result.user_id).removeClass("loading");
+				        	$('tr#author_'+result.user_id).append('<td class="'+css_classes+'"><a target="blank" class="btn '+(result.nbSubmit>0?"btn-primary":"btn-default")+' btn-xs pull-right" href="https://hal.archives-ouvertes.fr/search/index/?qa%5BcontributorId_i%5D%5B%5D=' + result.user_id + '&submit_advanced=Rechercher&rows=30&sort=submittedDate_tdate+desc">'+result.nbSubmit+'</a></td><td class="'+css_classes+'">'+(result.firstSubmit?result.firstSubmit:'')+'</td><td class="'+css_classes+'">'+(result.lastSubmit?result.lastSubmit:'')+'</td>');
+				        }, function(errno) {
+				        	$('tr#author_'+result.user_id).removeClass("loading");
+				        	$('tr#author_'+result.user_id).append('<td colspan="3">'+user_accounts_localization['searching_sub_err'][lang].replace("[param]", r.user_id)+'</td>');
+				        });
 				      }
 				    }); // result.forEach() 
 				} // result not null

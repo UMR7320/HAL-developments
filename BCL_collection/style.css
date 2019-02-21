@@ -3,8 +3,11 @@
 /* CSS utilisé sur la plateforme HAL pour personnaliser notre collection HAL */
 
 /* Le contenu de ce fichier est à copier-coller tel quel (dans le menu Privileges > Site Web > Apparence > Feuille de styles) 
+   Ou sinon, encore plus simple : on peut directement uploader ce fichier style.css via le menu Privileges > Site Web > Ressources > Déposer le fichier.
 
    The content of this file should be copy/paste as is (in menu Privileges > Website > Styles > Stylesheet)
+   Or even easier : just simply upload this style.css file through the menu Privileges > Website > Resources > Deposit the file)
+   
 */
 
 .navbar {
@@ -446,6 +449,25 @@ aside.legende div {
 .bdd-hal {
 	background-color: lightblue;
 }
+table#liste_membres_labo td.bdd-hal.unsure-match,
+.bdd-hal.unsure-match {
+	border-bottom: 3px solid orange;
+	border-top: 3px solid orange;
+}
+.bdd-hal.unsure-match {
+	border-left: 3px solid orange;
+}
+.bdd-hal.unsure-match:last-child {
+	border-right: 3px solid orange;		
+}
+.bdd-hal.unsure-match ~ td.bdd-hal.unsure-match {
+	border-left: none;
+}
+.bdd-hal.unsure-match {
+	color: orange;
+	font-weight: bold;
+	background-color: darkcyan;
+}
 tr.valid td:not(.bdd-labo) {
 	background-color: #dff0d8;
 }
@@ -454,6 +476,13 @@ tr.incoming td:not(.bdd-labo) {
 }
 tr.old td:not(.bdd-labo) {
 	background-color: #fcf8e3;
+}
+#liste_membres_labo tr.loading td:last-child:after {
+	background: url(https://hal.archives-ouvertes.fr/BCL/public/loading_96_32.gif) no-repeat 0% 50%;
+	content: 'Recherche des dépôts associés...';
+	zoom: 0.6;
+	position: relative;
+	right: -116px;
 }
 
 /* ui-autocomplete (avec rendu HTML) sur les formes auteur : */
