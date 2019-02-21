@@ -270,6 +270,32 @@ function getHALUser(critere, callback_success, callback_error) {
     }});
 }
 
+// getHALUserStats() retourne des statistiques concernant les dépôts HAL effectués par un compte utilisateur (user_id) :
+// total du nbre de dépôts réalisés dans HAL, date et heure du premier et du dernier dépôt, et liste de toutes les dates auxquelles un ou plusieurs dépôts ont été réalisés par cet utilisateur.
+// Note: en cas de besoin, le user_id peut être obtenu via un appel à la fonction getHALUser().
+function getHALUserStats(user_id, callback_success, callback_error, collection) {
+	if (!collection)
+		collection = "";
+    return $.ajax("https://api.archives-ouvertes.fr/search/"+collection, {data: 'q=contributorId_i:'+encodeURIComponent(user_id)+'&rows=0&wt=json&facet=true&facet.field=submittedDate_s&facet.mincount=1&facet.limit=9999&facet.sort=index', dataType: 'json', jsonp: false, error: function() {        
+        callback_error(-2);
+    }, success: function( d ) {
+      if (!d.facet_counts || !d.facet_counts.facet_fields || !d.facet_counts.facet_fields.submittedDate_s)
+          callback_error(-1); 
+      else {
+          var reponses = d.facet_counts.facet_fields.submittedDate_s;
+          var premier_depot = "";
+          if (reponses) {
+          	 premier_depot = reponses[0];
+          }
+          var dernier_depot = premier_depot;
+          if (reponses && reponses.length > 1) {
+            dernier_depot = reponses[reponses.length-2];
+          }
+          callback_success({"user_id": user_id, "nbSubmit": parseInt(d.response.numFound, 10), "firstSubmit": premier_depot, "lastSubmit": dernier_depot, "allDates": reponses});
+      }
+    }});
+}
+
 // Note: la fonction getIdHAL() essaye tout d'abord de trouver l'idHal demandé parmis les formes auteurs de la collection (liste qui inclut donc en toute logique tous les membres publiants du laboratoire).
 // En cas de réussite, la fonction callback_success ne retourne que l'idhal textuel (l'idhal numérique retourné est alors -1, et si on en a vraiment besoin, il faut refaire une deuxième requete AJAX dans la foulee pour le récuperer à partir de l'idhal textuel)
 // En cas d'échec, une nouvelle recherche est faite parmi toute la base de HAL, et s'il y a un et un seul idhal candidat, il est retourné, à la fois en textuel et en numérique.
@@ -428,7 +454,7 @@ function getFormesAuteurs(nom_collection, id_structures, callback_success, callb
                 if (membre)
                     liste.push({idhal: rep[2], name: rep[3], nb_depots: reponses[i+1]});
               }
-          callback_success(liste, warnings);
+          callback_success(liste, warnings, data);
       }
     }});
 }
