@@ -28,7 +28,14 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 </table>
 <script>// <![CDATA[
 
-var facet_limit = 9999;
+var facet_limit_for_query1 = 9999;
+var facet_limit_for_query2 = 9999;
+
+/* facettes supplémentaires permettant de récupérer les dates des derniers dépôts associés à chaque forme auteur : 
+   (si cette info ne vous est pas utile, vous pouvez mettre les 2 lignes ci-dessous en commentaires afin d'améliorer les performances)
+*/
+facet_limit_for_query1 = facet_limit_for_query1 + '&facet.pivot=authIdHal_s,submittedDateY_i,submittedDateM_i,submittedDateD_i&facet.sort=index';
+facet_limit_for_query2 = facet_limit_for_query2 + '&facet.pivot=submittedDateY_i,submittedDateM_i,submittedDateD_i,authId_i&facet.sort=index';
 
 // Localization: currently available languages are "en" and "fr".
 var lang=getCurrentLanguage();
@@ -54,15 +61,24 @@ var author_forms_localization = {
 	var listeMembres = [];
 	var listeFormesAuteurs = [];
 	var warnings = [];
+	var facet_pivot_raw_data = undefined;
+	var index_membres_par_nom = {};
+	var index_membres_par_idhal_s = {};
+	var doublons_sans_idhal = [];
+	var liste_sans_doublons = [];
 	$('#mybiblio-requirements').html(author_forms_localization['searching'][lang]);
 	$("#mybiblio-requirements").removeClass('alert-danger');
 	$("#mybiblio-requirements").addClass('alert-warning');
 	$("#mybiblio-requirements").addClass('loading');
 	$.when (getMembresLabo(function(liste) {listeMembres=liste;}, function(errno) {
 			$('#liste_membres_labo').html("<tr><td>Une erreur est survenue lors de la recuperation de la liste des membres du labo.</td></tr>");
-		}), getFormesAuteurs(my_config.code_collection, my_config.codes_structures_labo, function(liste, w) {listeFormesAuteurs=liste; warnings=w}, function(errno) {
-			$('#liste_membres_labo').html("<tr><td>Une erreur est survenue lors de la recuperation des formes auteurs.</td></tr>");
-		}, facet_limit)
+		}), getFormesAuteurs(my_config.code_collection, my_config.codes_structures_labo, function(liste, w, raw_data) {
+				listeFormesAuteurs=liste;
+				warnings=w;
+				facet_pivot_raw_data = raw_data;
+			}, function(errno) {
+				$('#liste_membres_labo').html("<tr><td>Une erreur est survenue lors de la recuperation des formes auteurs.</td></tr>");
+			}, facet_limit_for_query1)
 	).done(function (response1, response2) {
 		
 		$('aside.legende').show();
@@ -75,9 +91,6 @@ var author_forms_localization = {
 			    $('#mybiblio-requirements').append(author_forms_localization['unknown-warn'][lang]+"<br/>");
 		  });
 		}
-			
-		var index_membres_par_nom = {};
-		var index_membres_par_idhal_s = {};
 		
 		Lazy(listeMembres).sortBy(function(x) {return x.nom+" "+x.prenom}).each(function(x){
 			x.full_name=x.nom+" "+x.prenom;
@@ -86,12 +99,7 @@ var author_forms_localization = {
 				index_membres_par_idhal_s[x.idHal_s]=x;
 			}
 		});
-		
-		var buffered_line = "<tr><th>Nom complet (Nom Prenom)</th><th>IdHAL</th><th>D&eacute;p&ocirc;ts</th><th>Arrivé au labo&nbsp;</th><th>Parti du labo&nbsp;:</th></tr>";
-		var output_code = "";
-		var doublons_sans_idhal = [];
-		var liste_sans_doublons = [];
-		
+				
 		Lazy(listeFormesAuteurs).groupBy(function(x) {return x.name+':'+x.idhal}).each(function(x){var somme=0; for (var i = 0; i < x.length; i++) {somme+=x[i].nb_depots}; x[0].nb_depots=somme; liste_sans_doublons.push(x[0])});
 		
 		for (var i = 0; i < liste_sans_doublons.length; i++) {
@@ -103,6 +111,35 @@ var author_forms_localization = {
 					index.idHal_s=liste_sans_doublons[i].idhal;
 				}
 			}
+		}
+		
+		/* Récupération des dates des premiers et derniers dépôts pour tous les membres qui possèdent un idhal : 
+		   (pour des questions d'optimisation, on présuppose ici que les facets sont triées par ordre lexical, c.a.d. &facet.sort=index)
+		*/
+		if (!jQuery.isEmptyObject(index_membres_par_idhal_s) && facet_pivot_raw_data && facet_pivot_raw_data.facet_counts.facet_pivot) {
+			var facet_pivot_idhals = facet_pivot_raw_data.facet_counts.facet_pivot["authIdHal_s,submittedDateY_i,submittedDateM_i,submittedDateD_i"];
+			if (facet_pivot_idhals !== undefined)
+				for (var i = 0; i < facet_pivot_idhals.length; i++) {
+	                var current_idhal  = facet_pivot_idhals[i].value;
+	                if (index_membres_par_idhal_s[current_idhal] && index_membres_par_idhal_s[current_idhal].formes_auteurs)
+	                	for (var j = 0; j < index_membres_par_idhal_s[current_idhal].formes_auteurs.length; j++) {
+                			var current_member = index_membres_par_idhal_s[current_idhal].formes_auteurs[j];
+	                		if (current_member.idhal!='') {
+				                var most_recent_year  = facet_pivot_idhals[i].pivot[facet_pivot_idhals[i].pivot.length-1];
+				                var most_recent_month = most_recent_year.pivot [most_recent_year.pivot.length-1];
+				                var most_recent_day   = most_recent_month.pivot[most_recent_month.pivot.length-1];
+				                var most_recent_date  = most_recent_year.value + '-' + ("00" + most_recent_month.value).slice(-2) + '-' + ("00" + most_recent_day.value).slice(-2);
+				                if (!current_member.last_submit_date || most_recent_date > current_member.last_submit_date)
+				                	current_member.last_submit_date = most_recent_date;
+				                var oldest_year  = facet_pivot_idhals[i].pivot[0];
+				                var oldest_month = oldest_year.pivot[0];
+				                var oldest_day   = oldest_month.pivot[0];
+				                var oldest_date  = oldest_year.value + '-' + ("00" + oldest_month.value).slice(-2) + '-' + ("00" + oldest_day.value).slice(-2);
+				                if (!current_member.first_submit_date || oldest_date < current_member.first_submit_date)
+				                	current_member.first_submit_date = oldest_date;
+	                		}
+	                	}
+				}
 		}
 		
 		for (var i = 0; i < liste_sans_doublons.length; i++) {
@@ -124,7 +161,7 @@ var author_forms_localization = {
 					}
 				}
 			}
-		}
+		}		
 		
 		Lazy(listeMembres).each(function(membre) {
 			if (!membre.formes_auteurs) { membre.formes_auteurs = []; }
@@ -134,7 +171,8 @@ var author_forms_localization = {
 				}
 			}
 		});
-		
+				
+		var output_code = "";
 		Lazy(listeMembres).sortBy(function(m) {return m.full_name}).each(function(membre) {
 			Lazy(membre.formes_auteurs).each(function (forme_auteur) {
 				var forme_non_associee_a_l_idhal=(membre.idHal_s!="" && forme_auteur.idhal=="");
@@ -146,7 +184,9 @@ var author_forms_localization = {
 				output_code=output_code+"<td"+(!membre_officiel? " class='inconnu'":"")+">"+forme_auteur.name+"</td>";
 				output_code=output_code+"<td>"+(forme_auteur.idhal==""?"":'<span class="glyphicon glyphicon-user" data-toggle="tooltip" data-placement="auto" data-original-title="IdHal de l\'auteur"></span>&nbsp;')+forme_auteur.idhal+"</td>";
 				var name = forme_auteur.name.split(/\s/);
-				output_code=output_code+"<td><a target='blank' class='btn "+(forme_auteur.nb_depots>0?"btn-primary":"btn-default")+" btn-xs pull-right' href='https://hal.archives-ouvertes.fr/"+my_config.code_collection+"/search/index/?"+ ( forme_auteur.idhal=="" ? "qa%5BauthFullName_s%5D%5B%5D=%22"+encodeURIComponent(name[name.length-1]+" "+name.splice(0,name.length-1).join(" "))+"%22" : "&qa%5BauthIdHal_s%5D%5B%5D="+forme_auteur.idhal ) + "&submit_advanced=Rechercher&rows=30'>"+forme_auteur.nb_depots+"</a></td>";
+				output_code=output_code+"<td><a target='blank' class='btn "+(forme_auteur.nb_depots>0?"btn-primary":"btn-default")+" btn-xs pull-right' href='https://hal.archives-ouvertes.fr/"+my_config.code_collection+"/search/index/?"+ ( forme_auteur.idhal=="" ? "qa%5BauthFullName_s%5D%5B%5D=%22"+encodeURIComponent(name[name.length-1]+" "+name.splice(0,name.length-1).join(" "))+"%22" : "&qa%5BauthIdHal_s%5D%5B%5D="+forme_auteur.idhal ) + "&submit_advanced=Rechercher&rows=30&sort=submittedDate_tdate+desc'>"+forme_auteur.nb_depots+"</a></td>";
+				output_code=output_code+(forme_auteur.first_submit_date?"<td>"+forme_auteur.first_submit_date:"<td>")+"</td>";
+				output_code=output_code+(forme_auteur.last_submit_date?"<td>"+forme_auteur.last_submit_date:"<td>")+"</td>";
 				output_code=output_code+(membre.date_arrivee?"<td>"+membre.date_arrivee:"<td>")+"</td>";
 				output_code=output_code+(membre.date_depart?"<td class='parti'>"+membre.date_depart:"<td>")+"</td></tr>";
 				return true;
@@ -154,7 +194,7 @@ var author_forms_localization = {
 		});
 		
 		if (output_code!="") {
-			$('#liste_membres_labo').html("<thead><tr><th>Nom Prénom</th><th>idhal_s</th><th>dépôts</th><th>Arrivé le</th><th>Parti le</th></tr></thead><tbody>"+output_code+"</tbody>");
+			$('#liste_membres_labo').html("<thead><tr><th>Nom Prénom</th><th>idhal_s</th><th>Dépôts "+my_config.code_collection+"</th><th>Premier d&eacute;p&ocirc;t "+my_config.code_collection+"</th><th>Dernier d&eacute;p&ocirc;t "+my_config.code_collection+"</th><th>Arrivé le</th><th>Parti le</th></tr></thead><tbody>"+output_code+"</tbody>");
 		}
 		if (doublons_sans_idhal.length>0) {
 			var query = "("+encodeURIComponent(doublons_sans_idhal[0].name)+")";
@@ -164,21 +204,55 @@ var author_forms_localization = {
 			for (var i = 0; i < doublons_sans_idhal.length; i++) {
 				$('tr#doublon-'+validClassName(doublons_sans_idhal[i].name)+' td:nth-child(3)').html(doublons_sans_idhal[i].nb_depots);
 			}
-			$.ajax("https://api.archives-ouvertes.fr/search/"+my_config.code_collection, {data: 'q=authFullName_t:'+query+'&rows=0&wt=json&facet=true&facet.field=authIdHasStructure_fs&facet.mincount=1&facet.limit='+facet_limit, dataType: 'json', jsonp: false, success: function( d ) {
+			console.log(query);
+			$.ajax("https://api.archives-ouvertes.fr/search/"+my_config.code_collection, {data: 'q=authFullName_t:'+query+'&rows=1&sort=submittedDate_tdate%20desc&fl=submittedDate_s&rows=0&wt=json&facet=true&facet.field=authIdHasStructure_fs&facet.mincount=1&facet.limit='+facet_limit_for_query2, dataType: 'json', jsonp: false, success: function( d ) {
 			  var reponses = d.facet_counts.facet_fields.authIdHasStructure_fs;
 			  if (reponses !== undefined) {
-  				  var index_authors = {};
+  				  var index_authors = [];
 				  for (var i = 0; i < reponses.length; i+=2) {
 				    var rep = reponses[i]+'';
 				    rep = rep.split(/_FacetSep_|_JoinSep_/);
 				    if (rep[2]=="199944" || rep[2]=="107319") {
 				    	var name = rep[1].split(/\s/);
-				    	index_authors[name.splice(1).join(" ")+" "+name[0]]=rep[0];
+				    	index_authors[rep[0]]={"full_name": name.splice(1).join(" ")+" "+name[0], "nb_depots": reponses[i+1]};
 				    }
 				  }
-	  			  for (var i = 0; i < doublons_sans_idhal.length; i++) {
-				  		$('tr#doublon-'+validClassName(doublons_sans_idhal[i].name)+' td:nth-child(3)').html( ( index_authors[doublons_sans_idhal[i].name] ? "<a target='blank' class='btn btn-default btn-xs pull-right' href='https://hal.archives-ouvertes.fr/"+my_config.code_collection+"/search/index/q/authId_i%3A"+index_authors[doublons_sans_idhal[i].name]+"/rows/30/'>"+doublons_sans_idhal[i].nb_depots+"</a>" : doublons_sans_idhal[i].nb_depots ) );
+				  		  	
+				  /* Récupération des dates des premiers et derniers dépôts pour tous les membres qui ne possèdent pas d'idhal :
+				   (pour des questions d'optimisation, on présuppose ici que les facets sont triées par ordre lexical, c.a.d. &facet.sort=index)
+				  */
+				  if (index_authors.length > 0 && d && d.facet_counts.facet_pivot) {
+					var facet_pivot_years = d.facet_counts.facet_pivot["submittedDateY_i,submittedDateM_i,submittedDateD_i,authId_i"];		
+					if (facet_pivot_years !== undefined)
+						for (var i = 0; i < facet_pivot_years.length; i++) {
+			                var current_pivot_year  = facet_pivot_years[i].value;
+			                var facet_pivot_monthes = facet_pivot_years[i].pivot;
+			                for (var j = 0; j < facet_pivot_monthes.length; j++) {
+			                	var current_pivot_month  = facet_pivot_monthes[j].value;
+			                	var facet_pivot_days     = facet_pivot_monthes[j].pivot;
+			                	for (var k = 0; k < facet_pivot_days.length; k++) {
+			                		var current_pivot_day   = facet_pivot_days[k].value;
+			                		var facet_pivot_authors = facet_pivot_days[k].pivot;
+			                		var current_pivot_date  = current_pivot_year + '-' + ("00" + current_pivot_month).slice(-2) + '-' + ("00" + current_pivot_day).slice(-2);
+				                	for (var l = 0; l < facet_pivot_authors.length; l++) {
+				                		var current_pivot_author = index_authors[facet_pivot_authors[l].value];
+				                		if (current_pivot_author) {
+				                			if (!current_pivot_author.last_submit_date || current_pivot_author.last_submit_date < current_pivot_date)
+					                			current_pivot_author.last_submit_date = current_pivot_date;
+				                			if (!current_pivot_author.first_submit_date || current_pivot_author.first_submit_date > current_pivot_date)
+					                			current_pivot_author.first_submit_date = current_pivot_date;							                					}
+				                	}
+			                	}
+			                }
+						}
 				  }
+				
+	  			  Object.keys(index_authors).forEach(function (author_id, i) {
+	  			  		var className = "doublon-"+validClassName(index_authors[author_id].full_name)
+				  		$('tr#'+className+' td:nth-child(3)').html( ( author_id ? "<a target='blank' class='btn btn-default btn-xs pull-right' href='https://hal.archives-ouvertes.fr/"+my_config.code_collection+"/search/index/q/authId_i%3A"+author_id+"/rows/30/&sort=submittedDate_tdate+desc'>"+index_authors[author_id].nb_depots+"</a>" : index_authors[author_id].nb_depots ) );
+				  		$('tr#'+className+' td:nth-child(4)').html( index_authors[author_id].first_submit_date );
+				  		$('tr#'+className+' td:nth-child(5)').html( index_authors[author_id].last_submit_date );
+				  });
 			  }
 			  $('#mybiblio-requirements').html("");
 			  $("#mybiblio-requirements").removeClass('loading');
