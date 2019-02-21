@@ -441,6 +441,9 @@ aside.legende {
 aside.legende div {
 	padding:5px;
 }
+.inversion_nom_prenom {
+	color: red;
+}
 
 /* tableau comptes utilisateur HAL : */
 .bdd-labo {
