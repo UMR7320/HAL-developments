@@ -431,7 +431,7 @@ background-color: red;
 }
 table#liste_membres_labo tr.idhal-manquant td:not(:first-child),
 .legende .idhal-manquant {
-background-color: orange;
+background-color: yellow;
 }
 aside.legende {
 	float: right;
@@ -441,8 +441,16 @@ aside.legende {
 aside.legende div {
 	padding:5px;
 }
-.inversion_nom_prenom {
+div.inversion_nom_prenom,
+.inversion_nom_prenom td:first-child {
 	color: red;
+    background:  #FFDDDD;
+    font-weight: bold;
+}
+div.date_suspecte,
+tr td.date_suspecte { /* the "tr td" here gives more weight to this selector, so that it will properly override previous selector ".inversion_nom_prenom" */
+    color: red;
+    font-weight: bold;
 }
 
 /* tableau comptes utilisateur HAL : */
