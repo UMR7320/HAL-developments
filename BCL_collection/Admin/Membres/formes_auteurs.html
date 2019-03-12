@@ -42,13 +42,13 @@ var extra_criteria_for_query2_and_3 = "";
    (si cette info ne vous est pas utile, vous pouvez mettre les 2 lignes ci-dessous en commentaires afin d'améliorer les performances)
 */
 var extra_criteria_for_query1 = extra_criteria_for_query1 + '&facet.pivot=authIdHal_s,submittedDateY_i,submittedDateM_i,submittedDateD_i&facet.sort=index';
-var extra_criteria_for_query2_and_3 = extra_criteria_for_query2_and_3 + '&facet.pivot=submittedDateY_i,submittedDateM_i,submittedDateD_i,authId_i&facet.sort=index';
+var extra_criteria_for_query2_and_3 = extra_criteria_for_query2_and_3 + '&facet.pivot=authId_i,submittedDateY_i,submittedDateM_i,submittedDateD_i&facet.sort=index';
 
 /* facettes supplémentaires permettant de récupérer les dates des premières et dernières publications associées à chaque forme auteur : 
    (si cette info ne vous est pas utile, vous pouvez mettre les 2 lignes ci-dessous en commentaires afin d'améliorer les performances)
 */
 var extra_criteria_for_query1 = extra_criteria_for_query1 + '&facet.pivot=authIdHal_s,producedDateY_i,producedDateM_i,producedDateD_i&facet.sort=index';
-var extra_criteria_for_query2_and_3 = extra_criteria_for_query2_and_3 + '&facet.pivot=producedDateY_i,producedDateM_i,producedDateD_i,authId_i&facet.sort=index';
+var extra_criteria_for_query2_and_3 = extra_criteria_for_query2_and_3 + '&facet.pivot=authId_i,producedDateY_i,producedDateM_i,producedDateD_i&facet.sort=index';
 
 // Localization: currently available languages are "en" and "fr".
 var lang=getCurrentLanguage();
@@ -74,105 +74,96 @@ var author_forms_localization = {
 	}
 		
 		
-	function compute_first_and_last_dates_for_query_1(index_membres_par_idhal_s, facet_pivot_idhals) {
-		if (facet_pivot_idhals !== undefined)
-			for (var i = 0; i < facet_pivot_idhals.length; i++) {
-                var current_idhal = facet_pivot_idhals[i].value;
-                var current_field = facet_pivot_idhals[i].pivot[0].field;
+	function compute_first_and_last_dates_for_query_1(index_membres_par_idhal_s, facet_pivot) {
+		if (facet_pivot !== undefined)
+			for (var i = 0; i < facet_pivot.length; i++) {
+                var current_idhal = facet_pivot[i].value;
+                var current_field = facet_pivot[i].pivot[0].field;
                 if (index_membres_par_idhal_s[current_idhal] && index_membres_par_idhal_s[current_idhal].formes_auteurs)
                 	for (var j = 0; j < index_membres_par_idhal_s[current_idhal].formes_auteurs.length; j++) {
                			var current_member = index_membres_par_idhal_s[current_idhal].formes_auteurs[j];
                 		if (current_member.idhal!='') {
-                			var k = facet_pivot_idhals[i].pivot.length-1;
-			                var most_recent_year  = facet_pivot_idhals[i].pivot[k];
-			                while (!most_recent_year.pivot && k > 0) {
-			                	k--;
-			                	most_recent_year  = facet_pivot_idhals[i].pivot[k];
-			                }
-			                if (most_recent_year.pivot) {
-			                	k = most_recent_year.pivot.length-1
-				                var most_recent_month = most_recent_year.pivot [k];
-				                while (!most_recent_month.pivot && k > 0) {
-				                	k--;
-				                	most_recent_month  = most_recent_year.pivot [k];
-				                }
-				                if (most_recent_month.pivot) {
-					                var most_recent_day   = most_recent_month.pivot[most_recent_month.pivot.length-1];
-					                var most_recent_date  = most_recent_year.value + '-' + ("00" + most_recent_month.value).slice(-2) + '-' + ("00" + most_recent_day.value).slice(-2);
-					                k = 0;
-					                var oldest_year  = facet_pivot_idhals[i].pivot[k];
-					                while (!oldest_year.pivot && k < (facet_pivot_idhals[i].pivot.length-1)) {
-					                	k++;
-					                	oldest_year  = facet_pivot_idhals[i].pivot[k];
-					                }
-					                if (oldest_year.pivot) {
-					                	k = 0;
-						                var oldest_month = oldest_year.pivot[k];
-						                while (!oldest_month.pivot && k < (oldest_year.pivot.length-1)) {
-						                	k++;
-						                	oldest_month  = oldest_year.pivot[k];
-						                }
-						                if (oldest_month.pivot) {
-							                var oldest_day   = oldest_month.pivot[0];
-							                var oldest_date  = oldest_year.value + '-' + ("00" + oldest_month.value).slice(-2) + '-' + ("00" + oldest_day.value).slice(-2);
-							                if (current_field.startsWith("submittedDate")) {
-								                if (!current_member.last_submit_date || most_recent_date > current_member.last_submit_date)
-								                	current_member.last_submit_date = most_recent_date;
-								                if (!current_member.first_submit_date || oldest_date < current_member.first_submit_date)
-								                	current_member.first_submit_date = oldest_date;
-							                } else {
-								                if (!current_member.last_publication_date || most_recent_date > current_member.last_publication_date)
-								                	current_member.last_publication_date = most_recent_date;
-								                if (!current_member.first_publication_date || oldest_date < current_member.first_publication_date)
-								                	current_member.first_publication_date = oldest_date;
-							                }
-						                }
-					                }
-				                }
+			                var most_recent_year  = facet_pivot[i].pivot[facet_pivot[i].pivot.length-1];
+			                if (!most_recent_year.pivot) {
+								most_recent_year.pivot = [{value: "0"}];
+							}
+			                var most_recent_month = most_recent_year.pivot [most_recent_year.pivot.length-1];
+			                if (!most_recent_month.pivot) {
+								most_recent_month.pivot = [{value: "0"}];
+							}
+			                var most_recent_day   = most_recent_month.pivot[most_recent_month.pivot.length-1];
+			                var most_recent_date  = most_recent_year.value + '-' + ("00" + most_recent_month.value).slice(-2) + '-' + ("00" + most_recent_day.value).slice(-2);
+			                var oldest_year  = facet_pivot[i].pivot[0];
+			                if (!oldest_year.pivot) {
+								oldest_year.pivot = [{value: "0"}];
+							}
+			                var oldest_month = oldest_year.pivot[0];
+			                if (!oldest_month.pivot) {
+								oldest_month.pivot = [{value: "0"}];
+							}
+			                var oldest_day   = oldest_month.pivot[0];
+			                var oldest_date  = oldest_year.value + '-' + ("00" + oldest_month.value).slice(-2) + '-' + ("00" + oldest_day.value).slice(-2);
+							oldest_date = oldest_date.replace("-00","-99").replace("-00","-99");
+			                if (current_field.startsWith("submittedDate")) {
+				                if (!current_member.last_submit_date || most_recent_date > current_member.last_submit_date)
+				                	current_member.last_submit_date = most_recent_date;
+				                if (!current_member.first_submit_date || oldest_date < current_member.first_submit_date)
+				                	current_member.first_submit_date = oldest_date;
+			                } else {
+				                if (!current_member.last_publication_date || most_recent_date > current_member.last_publication_date)
+				                	current_member.last_publication_date = most_recent_date;
+				                if (!current_member.first_publication_date || oldest_date < current_member.first_publication_date)
+				                	current_member.first_publication_date = oldest_date;
 			                }
                 		}
                 	}
 			}
 	}
 	
-	/* Attention, prérequis dans facet_pivot_years :
+	/* Attention, prérequis dans facet_pivot :
 	   Pour des questions d'optimisation, on présuppose ici que les facets sont triées par ordre lexical, c.a.d. &facet.sort=index : 
 	*/  
-	function compute_first_and_last_dates_for_query_2_and_3(index_authors, facet_pivot_years) {
-	  if (index_authors.length > 0 && facet_pivot_years !== undefined && facet_pivot_years.length > 0)
-	    var current_field = facet_pivot_years[0].field;
-		for (var i = 0; i < facet_pivot_years.length; i++) {
-              var current_pivot_year  = facet_pivot_years[i].value;
-              var facet_pivot_monthes = facet_pivot_years[i].pivot;
-              if (facet_pivot_monthes)
-	              for (var j = 0; j < facet_pivot_monthes.length; j++) {
-	               	var current_pivot_month  = facet_pivot_monthes[j].value;
-	               	var facet_pivot_days     = facet_pivot_monthes[j].pivot;
-	               	if (facet_pivot_days)
-		               	for (var k = 0; k < facet_pivot_days.length; k++) {
-		               		var current_pivot_day   = facet_pivot_days[k].value;
-		               		var facet_pivot_authors = facet_pivot_days[k].pivot;
-		               		var current_pivot_date  = current_pivot_year + '-' + ("00" + current_pivot_month).slice(-2) + '-' + ("00" + current_pivot_day).slice(-2);
-			               	if (facet_pivot_authors)
-			                	for (var l = 0; l < facet_pivot_authors.length; l++) {
-			                		var current_pivot_author = index_authors[facet_pivot_authors[l].value];
-			                		if (current_pivot_author) {
-			                			if (current_field.startsWith("submittedDate")) {
-				                			if (!current_pivot_author.last_submit_date || current_pivot_author.last_submit_date < current_pivot_date)
-					                			current_pivot_author.last_submit_date = current_pivot_date;
-				                			if (!current_pivot_author.first_submit_date || current_pivot_author.first_submit_date > current_pivot_date)
-					                			current_pivot_author.first_submit_date = current_pivot_date;
-			                			} else { // producedDate :
-				                			if (!current_pivot_author.last_publication_date || current_pivot_author.last_publication_date < current_pivot_date)
-					                			current_pivot_author.last_publication_date = current_pivot_date;
-				                			if (!current_pivot_author.first_publication_date || current_pivot_author.first_publication_date > current_pivot_date)
-					                			current_pivot_author.first_publication_date = current_pivot_date;
-			                			}
-			                		 }
-			                	}
-		                }
-	              }
-		}
+	function compute_first_and_last_dates_for_query_2_and_3(index_authors, facet_pivot) {
+	  if (index_authors.length > 0 && facet_pivot !== undefined)
+		for (var l = 0; l < facet_pivot.length; l++) {
+			var current_pivot_author = index_authors[facet_pivot[l].value];
+            var current_field = facet_pivot[l].pivot[0].field;
+			if (current_pivot_author) {
+				var facet_pivot_years = facet_pivot[l].pivot;
+				if (facet_pivot_years && facet_pivot_years.length > 0) {
+					for (var i = 0; i < facet_pivot_years.length; i++) {
+					  var current_pivot_year  = facet_pivot_years[i].value;
+					  var facet_pivot_monthes = facet_pivot_years[i].pivot;
+					  if (!facet_pivot_monthes) {
+						facet_pivot_monthes = [{value: "0"}];
+					  }
+					  for (var j = 0; j < facet_pivot_monthes.length; j++) {
+					   	var current_pivot_month  = facet_pivot_monthes[j].value;
+					   	var facet_pivot_days     = facet_pivot_monthes[j].pivot;
+					   	if (!facet_pivot_days) {
+							facet_pivot_days = [{value: "0"}];
+						}
+					   	for (var k = 0; k < facet_pivot_days.length; k++) {
+					   		var current_pivot_day   = facet_pivot_days[k].value;
+					   		var current_pivot_date  = current_pivot_year + '-' + ("00" + current_pivot_month).slice(-2) + '-' + ("00" + current_pivot_day).slice(-2);
+							var current_pivot_date_99 = current_pivot_date.replace("-00","-99").replace("-00","-99");
+							if (current_field.startsWith("submittedDate")) {
+								if (!current_pivot_author.last_submit_date || current_pivot_author.last_submit_date < current_pivot_date)
+									current_pivot_author.last_submit_date = current_pivot_date;
+								if (!current_pivot_author.first_submit_date || current_pivot_author.first_submit_date > current_pivot_date_99)
+									current_pivot_author.first_submit_date = current_pivot_date_99;
+							} else { // producedDate :
+								if (!current_pivot_author.last_publication_date || current_pivot_author.last_publication_date < current_pivot_date)
+									current_pivot_author.last_publication_date = current_pivot_date;
+								if (!current_pivot_author.first_publication_date || current_pivot_author.first_publication_date > current_pivot_date_99)
+									current_pivot_author.first_publication_date = current_pivot_date_99;
+							}
+						} /* for (k) */
+					  } /* for (j) */
+					} /* for (i) */
+				} /* if (facet_pivot_years && facet_pivot_years.length > 0) */
+			} /* if (current_pivot_author) */
+		} /* for (l) */
 	}
 
 	function update_dates_for_author(index_authors, author_id, className) {
@@ -182,16 +173,21 @@ var author_forms_localization = {
 			author.date_arrivee = membre.date_arrivee;
 			author.date_depart  = membre.date_depart;
 		}
-		$('tr#'+className+' td:nth-child(3)').html( author.first_submit_date );
-		$('tr#'+className+' td:nth-child(4)').html( author.last_submit_date );
-		$('tr#'+className+' td:nth-child(6)').html( author.first_publication_date );
-		$('tr#'+className+' td:nth-child(7)').html( author.last_publication_date );
+
 		if (author.first_publication_date > "0000")
 			if (author.first_publication_date < author.date_arrivee || (author.first_publication_date > author.date_depart && author.date_depart!=""))
 				$('tr#'+className+' td:nth-child(6)').addClass("date_suspecte");
 		if (author.last_publication_date > "0000")
 			if (author.last_publication_date < author.date_arrivee || (author.last_publication_date > author.date_depart && author.date_depart!=""))
 			$('tr#'+className+' td:nth-child(7)').addClass("date_suspecte");
+
+		author.first_submit_date      = author.first_submit_date.replace("-99","-00").replace("-99","-00");
+		author.first_publication_date = author.first_publication_date.replace("-99","-00").replace("-99","-00");
+
+		$('tr#'+className+' td:nth-child(3)').html( author.first_submit_date );
+		$('tr#'+className+' td:nth-child(4)').html( author.last_submit_date );
+		$('tr#'+className+' td:nth-child(6)').html( author.first_publication_date );
+		$('tr#'+className+' td:nth-child(7)').html( author.last_publication_date );
 	}
 
 	var listeMembres = [];
@@ -366,8 +362,8 @@ var author_forms_localization = {
 			  /* Pour des questions d'optimisation, on présuppose ici que les facets sont triées par ordre lexical, c.a.d. &facet.sort=index : */
 
 			  if (d && d.facet_counts.facet_pivot) {
-			  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["submittedDateY_i,submittedDateM_i,submittedDateD_i,authId_i"]);
-			  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["producedDateY_i,producedDateM_i,producedDateD_i,authId_i"]);
+			  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,submittedDateY_i,submittedDateM_i,submittedDateD_i"]);
+			  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,producedDateY_i,producedDateM_i,producedDateD_i"]);
 			  }
 			
   			  Object.keys(index_authors).forEach(function (author_id, i) {
@@ -405,8 +401,8 @@ var author_forms_localization = {
 					  /* Pour des questions d'optimisation, on présuppose ici que les facets sont triées par ordre lexical, c.a.d. &facet.sort=index : */
 		
 					  if (d && d.facet_counts.facet_pivot) {
-					  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["submittedDateY_i,submittedDateM_i,submittedDateD_i,authId_i"]);
-					  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["producedDateY_i,producedDateM_i,producedDateD_i,authId_i"]);
+					  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,submittedDateY_i,submittedDateM_i,submittedDateD_i"]);
+					  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,producedDateY_i,producedDateM_i,producedDateD_i"]);
 					  }
 					  
 		  			  Object.keys(index_authors).forEach(function (author_id, i) {
