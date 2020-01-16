@@ -8,7 +8,7 @@
 	
 	my_config.codes_structures_labo = [199944, 107319]; // mettre ici entre crochets un ou plusieurs n° de structure séparés par des virgules. Ne mettre que les structure du niveau le plus élevé (i.e. mettre ici les "laboratoire" mais pas les "équipes de recherche" par ex.). Vous pourrez trouvez ces numéros dans AuréHAL en cherchant dans le référentiel des Structures.
 	
-	my_config.url_membres_labo = "https://bcl.cnrs.fr/spip.php?page=json&id_rubrique=2&membres&var_mode=calcul"; // URL où l'on peut récupérer un fichier JSON contenant la liste des membres du laboratoire (avec colonnes nom et prénom obligatoires, mais on peut y ajouter d'autres colonnes si besoin). Ce paramètre est utilisé par les différentes pages d'administration présentes dans le sous-dossier Admin/Membres.
+	my_config.url_membres_labo = "https://bcl.cnrs.fr/spip.php?page=json&id_rubrique=2&lang=fr&membres&var_mode=calcul"; // URL où l'on peut récupérer un fichier JSON contenant la liste des membres du laboratoire (avec colonnes nom et prénom obligatoires, mais on peut y ajouter d'autres colonnes si besoin). Ce paramètre est utilisé par les différentes pages d'administration présentes dans le sous-dossier Admin/Membres.
 	
 	my_config.critere_sous_structures = "(acronym_t:"+my_config.code_collection+"+OR+parentAcronym_t:"+my_config.code_collection+"+OR+code_s:(UMR7320+OR+UMR6039)+OR+name_t:(Bases+Corpus+Langage)+OR+parentName_t:(Bases+Corpus+Langage))"; // Ce paramètre est utilisé par la page d'administration des sous-structures. Mettre ici le ou les codes UMR de votre laboratoire, ainsi que son nom dans lequel vous aurez remplacé les espaces par des + et tous les caractères qui ne sont pas des lettres doivent être échappés (sous la forme URI encode)
 
