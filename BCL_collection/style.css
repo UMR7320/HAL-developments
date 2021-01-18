@@ -25,9 +25,11 @@ margin-top:0 !important;
 margin-bottom:0 !important;
 }
 .navbar .navbar-toggle,
-.navbar form .btn {
+.navbar form .btn,
+#nav-services form select {
 padding-top:3px;
 padding-bottom:3px;
+margin: 3px;
 font-size: inherit;
 }
 .navbar .navbar-toggle {
@@ -42,7 +44,7 @@ transform: scale(0.75);
 .navbar img.user-photo-thumb {
 transform: scale(1);
 }
-.navbar-nav > li > a {
+nav.navbar #nav-services .navbar-nav > li > * {
 padding-top:2px;
 padding-bottom:2px;
 }
