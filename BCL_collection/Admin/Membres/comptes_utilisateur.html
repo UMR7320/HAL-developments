@@ -21,6 +21,8 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 <div class="bdd-labo">Infos issues de la BDD du labo</div>
 <div class="bdd-hal">Infos issues de HAL</div>
 <div class="bdd-hal unsure-match">Infos issues de HAL, mais avec une incertitude sur la correspondance BDD &lt;-&gt; HAL (les champs nom/prénom ne coïncident pas =&gt; est-ce bien la même personne ?)</div>
+<div class="">Personne qui semble ne pas avoir de compte</div>
+<div class="bdd-hal error">Erreurs éventuelles</div>
 </aside>
 <div style="display:none;" id="show_empty_lines">
 <input type="checkbox" id="show_empty_lines_checkbox" checked="checked" /><label for="show_empty_lines_checkbox"></label></div>
@@ -128,7 +130,13 @@ script.onload = () =>
 				    }); // result.forEach() 
 				} // result not null
 				if (!accounts_found) {
-				  $('#liste_membres_labo > tbody:last-child').append('<tr class="empty-line">'+bdd_content+'<td></td><td></td></tr>');
+					var css_classes = ""; 
+					var error_message = "";
+					if (membre.idHal_s.length>0 || membre.idHal_i>0) {
+						css_classes = css_classes + " bdd-hal error";
+						error_message = "Can't find HAL user account for this person (but obviously, if it has an idHal it definitely MUST have a user account!!)";
+					}
+				  $('#liste_membres_labo > tbody:last-child').append('<tr class="empty-line">'+bdd_content+'<td colspan="7" class="'+css_classes+'">'+error_message+'</td></tr>');
 				}
 				nbRecherchesJusqueIci++;
 				if (nbRecherchesJusqueIci >= listeMembres.length) {

@@ -462,6 +462,11 @@ tr td.date_suspecte { /* the "tr td" here gives more weight to this selector, so
 .bdd-hal {
 	background-color: lightblue;
 }
+.bdd-hal.error {
+  background-color: red;
+  color: white;
+  font-weight: bold;
+}
 table#liste_membres_labo td.bdd-hal.unsure-match,
 .bdd-hal.unsure-match {
 	border-bottom: 3px solid orange;
