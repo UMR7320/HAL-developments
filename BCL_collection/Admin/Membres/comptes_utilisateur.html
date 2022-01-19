@@ -17,7 +17,6 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 
 <p><strong>Membres du labo ayant au moins un compte utilisateur dans HAL :</strong></p>
 <p id="mybiblio-requirements" class="alert alert-fixed alert-danger">Pour continuer, vous devez activer Javascript dans votre navigateur internet, puis recharger cette page.<br />Please enable Javascript in your browser, then reload this page.</p>
-<script src="../public/config.js"></script>
 <aside class="legende" style="display:none; max-width:400px;"><strong>Légende&nbsp;:</strong>
 <div class="bdd-labo">Infos issues de la BDD du labo</div>
 <div class="bdd-hal">Infos issues de HAL</div>
@@ -28,7 +27,6 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 <table id="liste_membres_labo">
 </table>
 <script>// <![CDATA[
-
 // Localization: currently available languages are "en" and "fr".
 var lang=getCurrentLanguage();
 if (lang!="fr")
@@ -50,8 +48,17 @@ var user_accounts_localization = {
                       "en": "A warning was issued during retrieval of these results, but there's no explanation message associated to this warning."}
 };
 
-	var listeMembres = [];
-	var listeFormesAuteurs = [];
+var listeMembres = [];
+var listeFormesAuteurs = [];
+// ]]></script>
+
+<!-- <script src="../public/config.js"></script> is not working anymore with the new HAL GUI in January 2022, so we need to do a little hack below... -->
+<script>// <![CDATA[
+const script = document.createElement('script');
+script.src = '../public/config.js';
+script.onload = () => 
+{
+
 	$('#mybiblio-requirements').html(user_accounts_localization['searching_bdd'][lang]);
 	$("#mybiblio-requirements").removeClass('alert-danger');
 	$("#mybiblio-requirements").addClass('alert-warning');
@@ -80,7 +87,7 @@ var user_accounts_localization = {
 		listeMembres.forEach(function(membre) {
 			var normalized_lastname = removeDiacritics(membre.nom).toLowerCase().replace(new RegExp("['\"\\`]", 'g'), "").split(/[^a-z]/)[0];
 			/* console.log("Recherche de "+ membre.nom + ", " + membre.prenom +"..."); */
-						
+
 			getHALUser(membre.nom+"\t"+membre.prenom, function(result, warnings) { 
 				if (warnings && warnings.length)
 				  warnings.forEach(function (e) {
@@ -144,6 +151,8 @@ var user_accounts_localization = {
 			});
 		});
 	});
+};
+document.head.append(script); // the hack is here :-)
 // ]]></script>
 
 </body>

@@ -17,8 +17,12 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 <!-- copier/coller dans HAL le code ci-dessous : -->
 
 <div id="labo-structures">Vous devez activer javascript dans votre navigateur internet puis recharger cette page.</div>
-<script src="../public/config.js"></script>
-<script>// <![CDATA[	
+<!-- <script src="../public/config.js"></script> is not working anymore with the new HAL GUI in January 2022, so we need to do a little hack below... -->
+<script>// <![CDATA[
+const script = document.createElement('script');
+script.src = '../public/config.js';
+script.onload = () => 
+{
 	var use_lang="en";
 	$("#labo-structures").html("Recherche en cours...");
 	getStructures(my_config.critere_sous_structures, function(raw_data, structures_index, structures_tree, original_query) {
@@ -26,6 +30,8 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 	}, function(errno, original_query) {		
 		$("#labo-structures").html("Une erreur s'est produite.");
 	});
+};
+document.head.append(script); // the hack is here :-)
 // ]]></script>
 
 </body>

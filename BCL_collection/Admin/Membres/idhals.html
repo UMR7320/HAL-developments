@@ -17,7 +17,6 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 
 <p><strong>Membres du labo ayant au moins une forme auteur dans HAL :</strong></p>
 <p id="mybiblio-requirements" class="alert alert-fixed alert-danger">Pour continuer, vous devez activer Javascript dans votre navigateur internet, puis recharger cette page.<br />Please enable Javascript in your browser, then reload this page.</p>
-<script src="../public/config.js"></script>
 <aside class="legende" style="display:none;"><strong>Légende&nbsp;:</strong>
 <div class="bdd-labo">Infos issues de la BDD du labo</div>
 <div class="bdd-hal">Infos issues de HAL</div>
@@ -49,6 +48,15 @@ var author_forms_localization = {
 
 	var listeMembres = [];
 	var listeFormesAuteurs = [];
+// ]]></script>
+
+<!-- <script src="../public/config.js"></script> is not working anymore with the new HAL GUI in January 2022, so we need to do a little hack below... -->
+<script>// <![CDATA[
+const script = document.createElement('script');
+script.src = '../public/config.js';
+script.onload = () => 
+{
+	
 	$('#mybiblio-requirements').html(author_forms_localization['searching_bdd'][lang]);
 	$("#mybiblio-requirements").removeClass('alert-danger');
 	$("#mybiblio-requirements").addClass('alert-warning');
@@ -118,6 +126,8 @@ var author_forms_localization = {
 			});
 		});
 	});
+};
+document.head.append(script); // the hack is here :-)
 // ]]></script>
 
 
