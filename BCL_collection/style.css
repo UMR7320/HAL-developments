@@ -10,13 +10,66 @@
    
 */
 
-.navbar {
+nav.navbar {
 min-height:0px;
 margin:0;
-box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.5);
+}
+nav.sub-header {
+	box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.5);
+	z-index: 1;
+}
+nav.navbar.header,
+nav.navbar.header .navbar-collapse,
+footer > :last-child {
+	z-index: 2;
+	height: initial !important;
+	background-color: black;
+}
+footer {
+	padding-top: 0;
+}
+footer > :last-child::before {
+	content: '\00a0';
+	width: 100%;
+	background-image: url(/img/ng/hal-logo-header.png);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 120px 38px;
+	height: 50px;
+}
+footer > :last-child li:last-child {
+	margin-bottom: 0;
+}
+nav.navbar.header .administration-menu,
+nav.navbar.header .menu-lang,
+nav.navbar.header .connected-menu {
+	top: initial;
+}
+#nav-services {
+	margin-top: 0;
 }
 .navbar .navbar-header {
-min-height:24px;
+	min-height:24px;
+}
+.site-header {
+	height: initial;
+	min-height: initial;
+}
+@media (min-width: 993px) {
+	nav.navbar.header .navbar-toggler {
+		zoom: 0.8;
+	}
+	.navbar-brand.logo-HAL {
+		padding: 0;
+		zoom: 0.5;
+	}
+}
+.navbar-brand.logo-HAL img {
+	transform: none;
+	opacity: 0.8;
+}
+nav.navbar .navbar-brand.logo-HAL:hover {
+	background-position: 0;
 }
 .navbar .logo-ccsd,
 .navbar .navbar-toggle,
@@ -61,15 +114,21 @@ margin-top:25px;
 #container .col-md-12 {
     padding: 0;
 }
-#container .titre-site {
+.site-header .titre-site, /* HAL's new user interface */
+#container .titre-site {  /* HAL's old user interface */
 font-size: 2em;
 text-shadow: 0px 0px 10px black, 2px 2px 5px black;
 }
+.site-header .titre-site h1,
+.site-header .titre-site h2,
 #container .titre-site h1,
 #container .titre-site h2 {
 font-size: 1em;
 white-space: nowrap;
 }
+.site-header .titre-site,
+.site-header .titre-site h1,
+.site-header .titre-site h2,
 #container .titre-site,
 #container .titre-site h1,
 #container .titre-site h2 {
@@ -83,44 +142,59 @@ display: inline;
 #container .titre-site a {
 text-decoration: none;
 }
-#container .logo table {
+.site-header .section-corps {
+	margin: 0;
+}
+.site-header .section-corps table, /* HAL's new user interface */
+#container .logo table { /* HAL's old user interface */
 height:125px;
 background: #782219 url('https://hal.archives-ouvertes.fr/BCL/public/background_hal.jpg') repeat-x;
 }
+.site-header .section-corps table tr,
 #container .logo table tr {
 background: url('https://hal.archives-ouvertes.fr/BCL/public/dessin_HAL.jpg') no-repeat 23em 100%;
 display: block;
 position: relative;
 }
 @media (min-width: 900px) {
+.site-header .section-corps table tr,
 #container .logo table tr {
 background-position: 75% 100%;
 }
-#container .logo td:last-child {
+.site-header.logo td:last-child, /* HAL's new user interface */
+#container .logo td:last-child { /* HAL's old user interface */
 padding-right: 12%;
 }
 }
+.site-header.logo td a:hover, 
+.site-header.logo td a:active, 
 #container .logo td a:hover,
 #container .logo td a:active {
 color: white;
 }
+.site-header.logo td, 
 #container .logo td {
 vertical-align: middle;
 width: 1%;
 }
+.site-header.logo td:first-child img,
 #container .logo td:first-child img {
 vertical-align: middle;
 }
+.site-header.logo td:first-child,
 #container .logo td:first-child {
 padding-left: 4%;
 }
+.site-header.logo td:last-child,
 #container .logo td:last-child {
 width:initial;
 }
+.site-header.logo td:last-child img,
 #container .logo td:last-child img {
 max-width:525px;
 }
 @media (max-width: 800px) {
+.site-header.logo td:last-child img,
 #container .logo td:last-child img {
 max-width: 85%;
 }
@@ -137,8 +211,9 @@ display:block; /* securité pour éviter que la règle précédente ne vienne ma
 #container .sidebar-nav{
 padding-left: 3%; 
 }
-#container .corps {
-padding: 0 3%; 
+#container .corps,
+main .section-corps {
+margin: 0 3%;
 }
 #container .breadcrumb > li + li::before {
 content: "> ";
@@ -158,8 +233,10 @@ color: #555555;
 }
 div, table,label, input, button, select, textarea {
 font-family: Arial, Helvetica, sans-serif;
-    font-size: 12;
-    color: #333333;
+    font-size: 12px;
+}
+table#liste_membres_labo .btn-default {
+	background-color: #fff; /* only required for HAL's old user interface (will be no longer needed with HAL's new user interface as of end 2022.) */
 }
 a {
 color: #808080;
@@ -170,10 +247,12 @@ right: 15px;
 margin: 3px 3% 0 0;
 z-index: 1;
 }
-.corps .widget-header {
+.section-widget .widget .widget-header, /* HAL's new user interface */
+.section-corps .widget .widget-header,  /* HAL's new user interface */
+.corps .widget-header { /* HAL's old user interface */
 padding: 8px;
-color: #999999;
-background-color: #f5f5f5; 
+color: #555555;
+background-color: #dddddd; 
 }
 .voir-aussi ul {
 list-style: none;
@@ -225,6 +304,35 @@ display:none;
 }
 
 /* surcharge de la charte graphique par defaut de HAL : */
+.website-navigation { /* HAL's new user interface */
+	background-color: rgba(98, 49, 51, 0.54);
+	position: absolute;
+	width: 100%;
+}
+.website-navigation + * {
+	margin-top: 240px; /* 5 x 60 - 60 */
+}
+@media (min-width: 768px) {
+	.website-navigation + * {
+		margin-top: 60px;
+	}
+}
+.site-header.logo {
+	height: 100px;
+}
+footer, /* HAL's new user interface */
+.footer { /* HAL's old user interface */
+background-color:#820e12;
+}
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+	background-color: #b53d41;
+}
+.website-navigation a:hover,
+.website-navigation .dropdown-menu a,
+.website-navigation .dropdown-menu li.nav-item:hover a {
+	color: #820e12 !important;
+}
 .pagination > .active > a, .pagination > .active > span, .pagination > .active > a:hover, .pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {
 background-color: #8E1a1E;
 border-color: #8E1a1E;
@@ -435,6 +543,9 @@ table#liste_membres_labo tr.idhal-manquant td:not(:first-child),
 .legende .idhal-manquant {
 background-color: yellow;
 }
+table#liste_membres_labo .doc-identifier {
+	line-height: 1;
+}
 aside.legende {
 	float: right;
 	border:1px solid black;
@@ -517,8 +628,14 @@ tr.old td:not(.bdd-labo) {
 
 /* arborescence du référentiel structures : */
 div#labo-structures blockquote {
+padding: 10px 20px;
+margin: 0 0 20px;
 border: 5px solid #eeeeee;
 cursor: pointer;
+}
+div#labo-structures blockquote > [class=] {
+	display:flex;
+	gap:10px;
 }
 div#labo-structures blockquote.statut-INCOMING {
 border: 5px solid red !important;
@@ -558,6 +675,11 @@ background-color: #f2dede;
 div#labo-structures .structure-element-institution:hover h6 {
     color: #a94442;
 }
+div#labo-structures .doc-identifier,
+div#labo-structures .typdoc,
+div#labo-structures .hal-bgtext {
+	line-height: 2.5;
+}
 div#labo-structures .badge {
 margin-left:5px;
 }
@@ -583,7 +705,7 @@ left: 30px;
 }
 div#labo-structures .arrow {
 top: 30px; 
-font-size: 9px;
+position:relative;
 }
 div#labo-structures .code {
 position: absolute; 
@@ -596,27 +718,30 @@ float:right;
 
 
 .footer {
-background-color:#820e12;
 height: initial;
 width: 100%
 }
 .footer ul {
 margin: 0 auto;
 }
-.footer ul {
+footer ul.pied,   /* HAL's new user interface */
+.footer ul.pied { /* HAL's old user interface */
 text-align: center;
 padding: 1% 0 2% 0;
 }
-.footer li {
+footer .pied li,
+.footer .pied li {
 display: inline;
 margin: 0 1% 0 1%;
 padding: 0 3% 0 0;
 border-right: solid 1px #fff;
 }
-.footer li:last-child {
+footer .pied li:last-child,
+.footer .pied li:last-child {
 border: none;
 }
-.footer li a {
+footer .pied li a,
+.footer .pied li a {
 font-family: "OpenSansBold", Arial, Helvetica, sans-serif;
 text-transform: uppercase;
 font-size: 1em;

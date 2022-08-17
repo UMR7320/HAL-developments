@@ -1,8 +1,14 @@
 
 var my_config={}; // les paramètres configurables par le gestionnaire de la collection se trouvent dans le fichier config.js
-$.getScript("../public/config.js");
+$.ajax({
+	async: false,
+	url: "https://" + location.host + "/" + location.pathname.split('/')[1] + "/public/config.js",
+	dataType: "script"
+});
 
-$.getScript("//static.ccsd.cnrs.fr/js/jquery/ui/autocomplete.html.js"); // permet d'activer le rendu HTML sur les popups d'autocomplete Jquery UI (tel que le fait le CCSD sur les autres pages de la plateforme HAL)
+if (location.pathname.split('/')[2]) {
+	$.getScript("//static.ccsd.cnrs.fr/js/jquery/ui/autocomplete.html.js"); // permet d'activer le rendu HTML sur les popups d'autocomplete Jquery UI (tel que le fait le CCSD sur les autres pages de la plateforme HAL)
+} // else : on ne le charge pas sur la page d'accueil, sinon ça ne sert à rien et ça génère une erreur.
 
 // boite à outils :
 var defaultDiacriticsRemovalMap = [
@@ -107,17 +113,112 @@ function getCurrentLanguage(defaultLanguage) {
     return (document.documentElement.lang ? document.documentElement.lang : defaultLanguage);
 }
 
+// Performs an HTTP request, with some retries and (optionally) using alternative URLs as fallback.
+//
+// NB: if the success_callback function exists, it must return true if everything succeeded normally
+// (otherwise, if it returns false, more HTTP requets retries will be performed, until success_callback() returns true OR nbRetries is exceeded)
+//
+// The finally_callback() - if it exists - is always called ONCE, after any calls to success_callback() and/or error_callback().
+//
+// The code of this function is inspired from https://stackoverflow.com/questions/26173548/nodejs-http-retry-on-timeout-or-error
+function doHttpRequest(url_or_urls_array, parameters, dataType, success_callback, error_callback = null, finally_callback = null, nbRetries = undefined, index = 0) {
+  var req,
+      url,
+      sawResponse = false;
+  if (nbRetries === undefined) {
+    nbRetries = (typeof url_or_urls_array === "string") ? 3 : url_or_urls_array.length + 3;
+  }
+  if (typeof url_or_urls_array === "object") {
+    index = index % url_or_urls_array.length;
+    url = url_or_urls_array[index];
+  } else { // url is a string
+    url = url_or_urls_array;
+  }
+  //console.log("Debug info: GET " + url + " ...");
+
+  var req = new XMLHttpRequest();
+  req.open('GET', url + (parameters != '' ? '?' + parameters : ''));
+  req.onerror = function(err) {
+              req.abort(); // prevent multiple execution of `callback` if error after response
+              if (!sawResponse) {
+                if (nbRetries >= 0) {
+                  console.log("Warning: GET " + url + " failed, retrying...");
+                  doHttpRequest(url_or_urls_array, parameters, dataType, success_callback, error_callback, finally_callback, nbRetries - 1, index + 1);
+                } else {
+                  console.log("ERROR: GET " + url + " failed. (no more tries)");
+                  if (error_callback) error_callback(err, req);
+                  if (finally_callback) finally_callback(null, null, req);
+                }
+              }
+            };
+  req.ontimeout = function() {
+                req.abort();
+                if (nbRetries >= 0) {
+                  console.log("Warning: GET " + url + " timed out, retrying...");
+                  doHttpRequest(url_or_urls_array, parameters, dataType, success_callback, error_callback, finally_callback, nbRetries - 1, index + 1);
+                } else {
+                  console.log("ERROR: GET " + url + " timed out. (no more tries)");
+                  if (error_callback) error_callback(null, req);
+                  if (finally_callback) finally_callback(null, null, req);
+                }
+              };
+  req.onload = function() {
+              sawResponse = true;
+              if (success_callback) {
+                if (success_callback(req.response, req.status, req)) {
+                  if (finally_callback) finally_callback(req.response, req.status, req);
+                } else {
+                  if (nbRetries >= 0) {
+                    console.log("Warning: content returned by GET " + url + " was not satisfactory, retrying...");
+                    doHttpRequest(url_or_urls_array, parameters, dataType, success_callback, error_callback, finally_callback, nbRetries - 1, index + 1);
+                  } else {
+                    console.log("ERROR: content returned by GET " + url + " was not satisfactory. (no more tries)");
+                    if (error_callback) error_callback(null, req);
+                    if (finally_callback) finally_callback(null, null, req);
+                  }
+                }
+              }
+            };
+  req.send();
+}
+
 var currentUser = {};
 
 // check if current user is currently logged in
 currentUser.is_connected = function () {
-	return ($(".navbar-fixed-top div.navbar-right > ul").length>0);
+	if (!document.getElementById('userList')) {
+		// HAL's old user interface:
+		return ($(".navbar-fixed-top div.navbar-right > ul").length>0);
+	} else {
+		// HAL's new user interface:
+		var login_button = document.getElementById('form-login');
+		if (!login_button) {
+		  login_button = document.getElementsByClassName('hal-login-button').length
+		}
+		if (login_button)
+			return false;
+		return document.getElementsByClassName('connected-menu').length || document.getElementById('log-out');
+	}
 }
 
 // retrieves current user's screen name
-// Note : returns "" if not connected -> see currentUser.is_connected()
-currentUser.screen_name = function () {
-	currentUser.screen_name = $('body > .navbar-fixed-top > .navbar-collapse > div.navbar-right > ul > li > a').text();
+// Warning : returns unspecified value if not connected -> call currentUser.is_connected() first!
+currentUser.get_screen_name = async function () {
+	if (currentUser.screen_name) {
+		return currentUser.screen_name;
+	}
+
+	if (!document.getElementById('userList')) {
+		// HAL's old user interface:
+		currentUser.screen_name = $('body > .navbar-fixed-top > .navbar-collapse > div.navbar-right > ul > li > a').text();
+	} else {
+		// HAL's new user interface:
+		// screen_name is no longer displayed on screen (it has been replaced by initials),
+		// therefore we need to proceed differently...
+		await new Promise(function(resolve, reject) {
+			currentUser.retrieve(function() { resolve(); });
+		});
+	}
 	return currentUser.screen_name;
 }
 
@@ -126,59 +227,173 @@ currentUser.screen_name = function () {
 currentUser.retrieve = function (callback) {
 	var user_id = 0;
 	var idhal_s = "";
-	$.get("https://hal.archives-ouvertes.fr/user/", "lang=fr", function(htmlText, status, jqxhr) {
-		if (jqxhr.status != 200) {
-			console.log("ERROR: /user/ returned unexpected HTTP status code "+jqxhr.status);
-		} else {
-			pos = htmlText.indexOf('<form class="form-horizontal"');	
-			if (pos > 0) {
-				var htmlFragment = $.parseHTML(htmlText.substring(pos, htmlText.indexOf('</form>', pos) +7))[0].getElementsByClassName('control-label');
-				for (var i = 0; i < htmlFragment.length; i++) {
+
+	var alternativeURLs = [
+		location.protocol+"//"+location.host+"/user/",
+		"https://hal.archives-ouvertes.fr/user/",
+		location.protocol+"//"+location.hostname+"/user/"
+	];
+
+	doHttpRequest(alternativeURLs, 'lang=fr', 'html', 
+	
+		function (htmlText, status, xhr) {
+			// code executé en cas de succès (présumé) de la requête HTTP:
+			user_id = 0;
+			idhal_s = "";
+			if (xhr.status != 200) {
+				console.log("ERROR: /user/ returned unexpected HTTP status code "+xhr.status);
+				return false;
+			}
+
+			var mapping = {
+				// labels:
+				"Identifiant": 'uid',
+				"Login": 'login',
+				"Titre": 'title',    // HAL's new UI
+				"Civilité": 'title', // HAL's old UI
+				"Nom de famille": 'lastname',
+				"Prénom": 'firstname',
+				"Email": 'email',    // HAL's new UI
+				"Courriel": 'email', // HAL's old UI
+
+				// field names:
+				"firstname": 'firstname',
+				"lastname": 'lastname',
+				"idhal": 'idhal_s',
+				// NB: in HAL's new UI, the idhal_i is not present in /user => it would require an extra request to /user/idhal/ in order to retrieve it.
+				"orcid": 'orcid',
+			}
+
+			function setField(fieldName, value) {
+				if (fieldName == 'uid') {
+					user_id = parseInt(value, 10);
+					if (user_id != value)
+						user_id = 0;
+					else
+						currentUser[fieldName] = user_id;
+				} else {
+					currentUser[fieldName] = value;
+				}				
+			}
+
+			function mapFieldValues(htmlFragments, getValueFunction, comparisonFunction) {
+				for (var i = 0; i < htmlFragments.length; i++) {
 					var e = htmlFragment[i];
-					var fcs = e.parentNode.getElementsByClassName('form-control-static');
-					if (fcs.length == 1) {
-						if (e.innerText == "Identifiant") {
-							user_id = parseInt(fcs[0].innerText, 10);
-							if (user_id != fcs[0].innerText)
-								user_id = 0;
-							else
-								currentUser.uid = user_id;
-						} else if (e.innerText == "Login") {
-							currentUser.login = fcs[0].innerText;
-						} else if (e.innerText == "Civilité") {
-							currentUser.title = fcs[0].innerText;
-						} else if (e.innerText == "Nom de famille") {
-							currentUser.lastname = fcs[0].innerText;
-						} else if (e.innerText == "Prénom") {
-							currentUser.firstname = fcs[0].innerText;
-						} else if (e.innerText == "Courriel") {
-							currentUser.email = fcs[0].innerText;
-						}
+					var value = getValueFunction(e);
+					if (value !== null) {
+						Object.keys(mapping).forEach(function (label) {
+							var field = mapping[label];
+							if (comparisonFunction(e, field, label)) {
+								setField(field, value);
+							}
+						});
 					}
 				}
-		
+			}
+
+			var something_found = false;
+
+			// HAL's old user interface:
+			////////////////////////////
+
+			pos = htmlText.indexOf('<form class="form-horizontal"');
+			if (pos > 0) {
+				var htmlFragments = [];
+				htmlFragments.push($.parseHTML(htmlText.substring(pos, htmlText.indexOf('</form>',  pos) +7))[0].getElementsByClassName('control-label'));
+				something_found |= (htmlFragments[0].length > 0);
+
 				pos = htmlText.indexOf('<form class="form-horizontal"', pos + 1);	
-	if (pos > 0) {
-					var htmlFragment = $.parseHTML(htmlText.substring(pos, htmlText.indexOf('</form>', pos) +7))[0].getElementsByClassName('control-label');
-					for (var i = 0; i < htmlFragment.length; i++) {
-						var e = htmlFragment[i];
+				if (pos > 0) {
+					htmlFragments.push($.parseHTML(htmlText.substring(pos, htmlText.indexOf('</form>', pos) +7))[0].getElementsByClassName('control-label'));
+				}
+
+				for (var i = 0; i < htmlFragments.length; i++) {
+					var htmlFragment = htmlFragments[i];
+
+					mapFieldValues(htmlFragment, function(e) {
+						var fcs = e.parentNode.getElementsByClassName('form-control-static');
+						return (fcs.length == 1) ? fcs[0].innerText : null;
+					}, function(e, field, label) {
+						return e.innerText.toLowerCase() == label.toLowerCase();
+					});
+
+					for (var j = 0; j < htmlFragment.length; j++) {
+						var e = htmlFragment[j];
 						var fcs = e.parentNode.getElementsByClassName('form-control-static');
 						if (fcs.length == 1) {
 							if (e.innerText.match(/IdHal/)) {
 								idhal_s = fcs[0].firstElementChild.innerText;
 								currentUser.idhal_s = idhal_s;
-							} else if (e.innerText.match(/Votre nom dans HAL/)) {
+							} else if (e.innerText.match(/Votre nom dans HAL/i)) {
 								currentUser.screen_name = fcs[0].innerText;
 							}
 						}
 					}
 				}
 			}
-		}
-	}, "html" ).fail(function () {
-		console.log("ERROR: GET /user/ failed.");
-	}).done(function () {
-		// code à faire une fois que tout est terminé (par exemple appeler la callback qui nous avait été passée en paramètres) - cette section est toujours executée, quel que soit l'issue de ce .get()
+
+			// HAL's new user interface:
+			////////////////////////////
+
+			var doc = new DOMParser().parseFromString(htmlText, 'text/html');
+
+			// main method for retrieving most of the fields:
+			htmlFragment = doc.getElementsByTagName('tr');
+			something_found |= (htmlFragment.length > 0);
+			for (var i = 0; i < htmlFragment.length; i++) {
+				htmlElements = htmlFragment[i].querySelectorAll('[class]');
+				var fieldName = null;
+				for (var j = 0; j < htmlElements.length; j++) {
+					var e = htmlElements[j];
+					if (e.classList.contains('field')) {
+						fieldName = null;
+						Object.keys(mapping).forEach(function (label) {
+							if (e.textContent.match(new RegExp("\\b"+label+"\\b", 'i'))) {
+								fieldName = mapping[label];
+							}
+						});
+						if (fieldName) {
+							continue;
+						}
+					}
+					if (e.classList.contains('value') && fieldName && e.textContent != "") {
+						setField(fieldName, e.textContent.trim());
+						fieldName = null;
+					}
+				}
+			}
+
+			// screen name (1st method)
+			htmlFragment = doc.getElementsByClassName('connected-navigation')[0];
+			if (htmlFragment && htmlFragment.querySelector('.user-circle.photo')) {
+				var userPic = htmlFragment.querySelector('.user-circle.photo').style.backgroundImage.split('?')[0];
+				var m = null;
+				if (userPic && (m = userPic.match(/\/([0-9]+)\//))) {
+					setField('uid', m[1]);
+				}
+			}
+			if (htmlFragment && htmlFragment.querySelector('.user-circle + div.strong')) {
+				var screen_name = htmlFragment.querySelector('.user-circle + div.strong').textContent;
+				if (screen_name !== "")
+					currentUser.screen_name = screen_name;
+			}
+
+			// screen name (2nd method)
+			if (!currentUser.screen_name || currentUser.screen_name == '') {
+				if (currentUser.firstname && currentUser.lastname) {
+					currentUser.screen_name = currentUser.firstname + " " + currentUser.lastname;
+				}
+			}
+
+			idhal_s = currentUser['idhal_s'];
+
+			return something_found;
+		
+	}, function (err, req) {
+		// code executé en cas d'erreur définitive sur la requête HTTP (après plusieurs essais infructueux).
+
+	}, function (htmlText, status, xhr) {
+		// code executé une fois que tout est terminé (pour appeler la callback qui nous avait été passée en paramètres) - cette section est toujours executée, quel que soit l'issue de la requête HTTP
 		callback(user_id, idhal_s);
 	});
 }
@@ -188,37 +403,54 @@ currentUser.retrieve = function (callback) {
 currentUser.retrieve_idhal = function (callback) {
 	var idhal_i = 0;
 	var idhal_s = "";
-	$.get("https://hal.archives-ouvertes.fr/user/idhal/", "lang=fr", function(htmlText, status, jqxhr) {
-		if (jqxhr.status != 200) {
-			console.log("ERROR: /user/idhal/ returned unexpected HTTP status code "+jqxhr.status);
-		} else {
-			pos = htmlText.indexOf('<input type="hidden" name="idhal"');	
-			if (pos > 0) {
-				idhal_i = $($.parseXML(htmlText.substring(pos, htmlText.indexOf('>', pos) +1))).children('input').attr('value');
-				currentUser.idhal_i = idhal_i;
-			}
+
+	var alternativeURLs = [
+		location.protocol + "//" + location.host + "/user/idhal/",
+		"https://hal.archives-ouvertes.fr/user/idhal/",
+		location.protocol + "//" + location.hostname + "/user/idhal/"
+	];
+
+		doHttpRequest(alternativeURLs, "lang=fr", 'html', 
 		
-			pos = htmlText.indexOf('<input type="text" name="uri" id="uri"');
-			if (pos > 0) {
-				idhal_s = $($.parseXML(htmlText.substring(pos, htmlText.indexOf('>', pos) +1))).children('input').attr('value');
-				currentUser.idhal_s = idhal_s;
-			}
-		}
-	}, "html" ).fail(function () {
-		console.log("ERROR: GET /user/idhal/ failed.");
-	}).done(function () {
-		// code à faire une fois que tout est terminé (par exemple appeler la callback qui nous avait été passée en paramètres) - cette section est toujours executée, quel que soit l'issue de ce .get()
+			function(htmlText, status, xhr) {
+				// code executé en cas de succès (présumé) de la requête HTTP:
+				if (xhr.status != 200) {
+					console.log("ERROR: /user/idhal/ returned unexpected HTTP status code "+xhr.status);
+					return false;
+				} else {
+					pos = htmlText.indexOf('<input type="hidden" name="idhal"');	
+					if (pos > 0) {
+						idhal_i = $.parseHTML(htmlText.substring(pos, htmlText.indexOf('>', pos) +1))[0].getAttribute('value');
+						currentUser.idhal_i = idhal_i;
+					}
+				
+					pos = htmlText.indexOf('<input type="text" name="uri" id="uri"');
+					if (pos > 0) {
+						idhal_s = $.parseHTML(htmlText.substring(pos, htmlText.indexOf('>', pos) +1))[0].getAttribute('value');
+						currentUser.idhal_s = idhal_s;
+					}
+					return true;
+				}
+
+		}, function (err, req) {
+		// code executé en cas d'erreur définitive sur la requête HTTP (après plusieurs essais infructueux).
+
+	}, function (htmlText, status, xhr) {
+		// code executé une fois que tout est terminé (pour appeler la callback qui nous avait été passée en paramètres) - cette section est toujours executée, quel que soit l'issue de la requête HTTP
 		if (idhal_s == "") {
 			// on a échoué => on essaye de s'y prendre autrement :
-			var fullname = currentUser.retrieve_screen_name().trim();
-			getIdHAL(my_config.code_collection, fullname, function(idhal_i, idhal_s, original_name) {
-				currentUser.idhal_s = idhal_s;
-				if (idhal_i >= 0)
-					currentUser.idhal_i = idhal_i;
-				callback(idhal_s, idhal_i);
-			}, function(errno, original_name) {
-				callback(idhal_s, idhal_i);
-			});
+			(async function getScreenNameFromHalAPI() {
+				await currentUser.get_screen_name();
+				var fullname = currentUser.screen_name ? currentUser.screen_name.trim() : '';
+				getIdHAL(my_config.code_collection, fullname, function(idhal_i, idhal_s, original_name) {
+					currentUser.idhal_s = idhal_s;
+					if (idhal_i >= 0)
+						currentUser.idhal_i = idhal_i;
+					callback(idhal_s, idhal_i);
+				}, function(errno, original_name) {
+					callback(idhal_s, idhal_i);
+				});
+			})();
 		} else {
 			callback(idhal_s, idhal_i);
 		}
@@ -247,7 +479,8 @@ function getMembresLabo(callback_success, callback_error) {
 // (nom, prénom, email, login, ou user_id)
 // Note: pour les recherches par nom+prénom, attention a bien utiliser l'ordre (et la syntaxe) "NOM prenom" (sinon le resultat ne sera pas garanti.), i.e. ne pas mettre d'accents, et mettre le nom de famille en premier.
 function getHALUser(critere, callback_success, callback_error) {
-    return $.ajax("https://hal.archives-ouvertes.fr/administrate/ajaxsearchuser", {data: 'term='+critere.replace(new RegExp("\\s+", 'g'), "+"), dataType: 'json', jsonp: false, error: function() {        
+    var url = location.protocol + "//" + location.hostname + "/administrate/ajaxsearchuser";
+    return $.ajax(url, {data: 'term='+critere.replace(new RegExp("\\s+", 'g'), "+"), dataType: 'json', jsonp: false, error: function() {        
         callback_error(-1);
     }, success: function( liste ) {
       var warnings = [];
@@ -274,12 +507,14 @@ function getHALUser(critere, callback_success, callback_error) {
 // total du nbre de dépôts réalisés dans HAL, date et heure du premier et du dernier dépôt, et liste de toutes les dates auxquelles un ou plusieurs dépôts ont été réalisés par cet utilisateur.
 // Note: en cas de besoin, le user_id peut être obtenu via un appel à la fonction getHALUser().
 function getHALUserStats(user_id, callback_success, callback_error, collection) {
-	if (!collection)
-		collection = "";
+  if (!collection)
+    collection = "";
     return $.ajax("https://api.archives-ouvertes.fr/search/"+collection, {data: 'q=contributorId_i:'+encodeURIComponent(user_id)+'&rows=0&wt=json&facet=true&facet.field=submittedDate_s&facet.mincount=1&facet.limit=9999&facet.sort=index', dataType: 'json', jsonp: false, error: function() {        
         callback_error(-2);
     }, success: function( d ) {
-      if (!d.facet_counts || !d.facet_counts.facet_fields || !d.facet_counts.facet_fields.submittedDate_s)
+      if (d.error || !d.response) {
+        callback_error(-8, null, d);
+      } else if (!d.facet_counts || !d.facet_counts.facet_fields || !d.facet_counts.facet_fields.submittedDate_s)
           callback_error(-1); 
       else {
           var reponses = d.facet_counts.facet_fields.submittedDate_s;
@@ -304,7 +539,9 @@ function getIdHAL(nom_de_la_collection, full_name, callback_success, callback_er
     return $.ajax("https://api.archives-ouvertes.fr/search/"+nom_de_la_collection, {data: 'q=authFullName_t:'+encodeURIComponent(full_name_sci)+'&rows=0&wt=json&facet=true&facet.field=authFullNameIdHal_fs&facet.mincount=1&facet.limit=1000', dataType: 'json', jsonp: false, error: function() {
         callback_error(-2,full_name);
     }, success: function( d ) {
-      if (!d.facet_counts || !d.facet_counts.facet_fields || !d.facet_counts.facet_fields.authFullNameIdHal_fs)
+      if (d.error || !d.response) {
+        callback_error(-8, full_name, d);
+      } else if (!d.facet_counts || !d.facet_counts.facet_fields || !d.facet_counts.facet_fields.authFullNameIdHal_fs)
           callback_error(-1,full_name); 
       else {
           var reponses = d.facet_counts.facet_fields.authFullNameIdHal_fs;
@@ -320,8 +557,10 @@ function getIdHAL(nom_de_la_collection, full_name, callback_success, callback_er
           $.ajax("https://api.archives-ouvertes.fr/ref/author", {data: 'q=fullName_t:'+encodeURIComponent(full_name_sci)+'&wt=json&rows=2000&fl=docid,fullName_s,email_s,idHal_i,idHal_s,structureId_i,structure_s,valid_s&fq=idHal_i:(-0)&group=true&group.field=idHal_i&group.limit=200&sort=idHal_i+asc', dataType: 'json', jsonp: false, error: function() {
                 callback_error(-4,full_name);
           }, success: function( d ) {
-              if (!d.grouped || !d.grouped.idHal_i || !d.grouped.idHal_i.groups || !d.grouped.idHal_i.groups.length)
-                  callback_error(-3,full_name); 
+              if (d.error || !d.grouped) {
+                callback_error(-8, full_name, d);
+              } else if (!d.grouped.idHal_i || !d.grouped.idHal_i.groups || !d.grouped.idHal_i.groups.length)
+                callback_error(-3,full_name); 
               else {
                   var reponses = d.grouped.idHal_i.groups;
                   var nbIdHAL = reponses.length;
@@ -403,14 +642,18 @@ function searchFormeAuteur(criteres, callback_success, callback_error, limit) {
 	return $.ajax("https://api.archives-ouvertes.fr/ref/author/", {data: 'q='+criteres_hal.join('%20AND%20')+'&wt=json&fl=*&rows='+limit, dataType: 'json', jsonp: false, error: function() {        
         callback_error(-1);
     }, success: function( data ) {
-          var warnings = [];
-          if (data.response.numFound && data.response.numFound >= limit) {
-            warnings.push({warning: "rows_limit", param: limit});
+          if (data.error || !data.response) {
+            callback_error(-8, null, data);
+          } else {
+            var warnings = [];
+            if (data.response.numFound && data.response.numFound >= limit) {
+              warnings.push({warning: "rows_limit", param: limit});
+            }
+            var liste = [];
+            if (data.response.docs)
+              liste = data.response.docs;
+            callback_success(liste, warnings);
           }
-          var liste = [];
-          if (data.response.docs)
-            liste = data.response.docs;
-          callback_success(liste, warnings);
     }});
 }
 
@@ -429,8 +672,10 @@ function getFormesAuteurs(nom_collection, id_structures, callback_success, callb
     return $.ajax("https://api.archives-ouvertes.fr/search/"+nom_collection, {data: 'q=*&rows=0&wt=json&facet=true&facet.field=structHasAuthIdHal_fs&facet.mincount=1&facet.limit='+facet_limit, dataType: 'json', jsonp: false, error: function() {        
         callback_error(-2);
     }, success: function( data ) {
-      if (!data.facet_counts || !data.facet_counts.facet_fields || !data.facet_counts.facet_fields.structHasAuthIdHal_fs)
-              callback_error(-1,full_name); 
+      if (data.error || !data.response) {
+        callback_error(-8, null, data);
+      } else if (!data.facet_counts || !data.facet_counts.facet_fields || !data.facet_counts.facet_fields.structHasAuthIdHal_fs)
+        callback_error(-1); 
       else {
           var warnings = [];
           if (data.response.numFound && data.response.numFound >= facet_limit) {
@@ -482,7 +727,9 @@ function getFirstnameLastname(fullname, idhal_s, callback_function) {
             return $.ajax("https://api.archives-ouvertes.fr/ref/author", {data: requete, dataType: 'json', jsonp: false, error: function() {        
                 fallback_best_effort(fullname, -1);
             }, success: function( data ) {
-                if (!data.response || !data.response.docs || !data.response.docs.length)
+                if (data.error || !data.response) {
+                  fallback_best_effort(fullname, -8);
+                } else if (!data.response.docs || !data.response.docs.length)
                     fallback_best_effort(fullname, -2);
                 else {
                     var reponses = data.response.docs;
@@ -538,10 +785,12 @@ function getJournalID(journal_name, callback_success, callback_error, original_j
     return $.ajax("https://api.archives-ouvertes.fr/ref/journal/", {data: 'q=title_t:%22'+encodeURIComponent(trimmed_name)
     +'%22&wt=json&fl=docid,label_s,title_s,titleAbbr_s,valid_s&sort=valid_s+desc,label_s+asc&rows=1000', dataType: 'json', jsonp: false, error: function() {
         if (callback_error)
-            callback_error(-1, original_journal_name);
+          callback_error(-1, original_journal_name);
     }, success: function( data ) {
-        if (!data.response || !data.response.docs)
-            callback_error(-2, original_journal_name);
+        if (data.error || !data.response) {
+          callback_error(-8, original_journal_name, data);
+        } else if (!data.response.docs)
+          callback_error(-2, original_journal_name);
         else {
             var reponses = data.response.docs;
             var fullname_s = trimmed_name;
@@ -610,6 +859,10 @@ function getStructures(query, callback_success, callback_error) {
     return $.ajax("https://api.archives-ouvertes.fr/ref/structure/", {data: 'q='+query+'&wt=json&fl=name_s,code_s,acronym_s,docid,address_s,type_s,url_s,valid_s,updateDate_s,parentDocid_i&group=true&group.field=type_s&group.limit=200&sort=type_s+asc,valid_s+desc,name_s+asc', dataType: 'json', jsonp: false, error: function() {        
         callback_error(-1, query);
     }, success: function( d ) {
+      if (d.error || !d.grouped) {
+        callback_error(-8, query, d);
+        return;
+      } // else:
       var reponses = d.grouped.type_s.groups;
       var structure_groups = {};
       var structures_tree = [];
@@ -673,36 +926,61 @@ function getStructures(query, callback_success, callback_error) {
 }
 
 function writeStructures(structures, level, lang) {
+    var is_HAL_new_user_interface = (document.getElementById('userList')); 
     var c = "";
     for (var j = 0; j < structures.length; j++) {
         var s = structures[j];
         c = c + '<div class="row">';
         for (var i = 0; i < (level-1); i++) {
-            c = c + '<div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"><div class="bounds b_vertical b_vertical_0" style="display: none;"></div><div class="bounds b_horizontal b_horizontal_0" style="display: none;"></div></div>';
+            c = c + '<div class="col-1 '+(!is_HAL_new_user_interface ? 'col-xs-1 col-sm-1 col-md-1 col-lg-1' : '')+'"><div class="bounds b_vertical b_vertical_0" style="display: none;"></div><div class="bounds b_horizontal b_horizontal_0" style="display: none;"></div></div>';
         }
         if (level > 0) {
-            c = c + '<div class="col-xs-1 col-sm-1 col-md-1 col-lg-1"><div class="bounds b_vertical b_vertical_1 b_last "></div><div class="bounds b_horizontal b_horizontal_1 b_last "><i class="glyphicon glyphicon-play arrow" style="left:7px;"></i></div></div>';
+            c = c + '<div class="col-1 '+(!is_HAL_new_user_interface ? 'col-xs-1 col-sm-1 col-md-1 col-lg-1' : '')+'"><div class="bounds b_vertical b_vertical_1 b_last "></div><div class="bounds b_horizontal b_horizontal_1 b_last "><i class="icon-right glyphicon glyphicon-play arrow"'+(is_HAL_new_user_interface? '' : ' style="left:7px; top:32px;')+'"></i></div></div>';
         }
-        c = c + '<div data-rank="'+(12-level)+'" class="col-xs-'+(12-level)+' col-sm-'+(12-level)+' col-md-'+(12-level)+' col-lg-'+(12-level)+'" data-category="'+s.type_s+'">';
+        c = c + '<div data-rank="'+(12-level)+'" class="col-'+(12-level)+' '+(!is_HAL_new_user_interface ? 'col-xs-'+(12-level)+' col-sm-'+(12-level)+' col-md-'+(12-level)+' col-lg-'+(12-level) : '')+'" data-category="'+s.type_s+'">';
         var icon_class = "";
-        if (s.valid_s=="VALID") { icon_class = "alert-success"; }
-        if (s.valid_s=="INCOMING") { icon_class = "alert-danger"; }
-        if (s.valid_s=="OLD") { icon_class = "alert-warning"; }
+        if (s.valid_s=="VALID") { icon_class = "alert-success icon-valid green"; }
+        if (s.valid_s=="INCOMING") { icon_class = "alert-danger icon-warning red"; }
+        if (s.valid_s=="OLD") { icon_class = "alert-warning icon-not_valid orange"; }
         var block_class = "statut-"+s.valid_s;
+        var title_class = s.valid_s.toLowerCase();
+        var type_s_translation = s.type_s;
         var titre = "This structure was last updated on "+s.updateDate_s;
-        var icon_type_struct = '<span class="label label-primary">'+s.type_s[0].toUpperCase()+s.type_s.slice(1)+'</span>';
         if (lang=="fr") {
-            if (s.type_s=="researchteam") { icon_type_struct = '<span class="label label-primary">&Eacute;quipe de recherche</span>'; }
-            if (s.type_s=="department")   { icon_type_struct = '<span class="label label-success">D&eacute;partement</span>'; }
-            if (s.type_s=="laboratory")   { icon_type_struct = '<span class="label label-warning">Laboratoire</span>'; }
-            if (s.type_s=="institution")  { icon_type_struct = '<span class="label label-danger">Institution</span>'; }
+            if (s.type_s=="researchteam") { type_s_translation = 'Équipe de recherche'; }
+            if (s.type_s=="department")   { type_s_translation = 'Département'; }
+            if (s.type_s=="laboratory")   { type_s_translation = 'Laboratoire'; }
+            if (s.type_s=="institution")  { type_s_translation = 'Institution'; }
             titre = "Structure mise &agrave; jour le "+s.updateDate_s;
         } else {
-            if (s.type_s=="researchteam") { icon_type_struct = '<span class="label label-primary">Research Team</span>'; }
+            if (s.type_s=="researchteam") { type_s_translation = 'Research Team'; }
         }
+        type_s_translation = s.type_s[0].toUpperCase()+s.type_s.slice(1);
+        var icon_type_struct_class = 'label typdoc';
+        if (is_HAL_new_user_interface) {
+          if (s.type_s=="researchteam") { icon_type_struct_class+=' '; }
+          if (s.type_s=="department")   { icon_type_struct_class+=' badge-orange'; }
+          if (s.type_s=="laboratory")   { icon_type_struct_class+=' badge-orange'; }
+          if (s.type_s=="institution")  { icon_type_struct_class+=' badge-orange'; }
+        } else {
+          if (s.type_s=="researchteam") { icon_type_struct_class+=' label-primary'; }
+          if (s.type_s=="department")   { icon_type_struct_class+=' label-success'; }
+          if (s.type_s=="laboratory")   { icon_type_struct_class+=' label-warning'; }
+          if (s.type_s=="institution")  { icon_type_struct_class+=' label-danger'; }
+        }
+        var icon_type_struct = '<span class="'+icon_type_struct_class+'">'+type_s_translation+'</span>';
         c = c + '<blockquote class="structure-element-'+s.type_s+' '+block_class+'" title="'+titre+'">';
         c = c + '<div class="boutons_supplementaires"><a class="btn btn-primary" target="_blank" href="https://hal.archives-ouvertes.fr/search/index/q/*/structId_i/'+s.docid+'">Voir les d&eacute;p&ocirc;ts associ&eacute;s</a></div>';
-        c = c + '<h6 onclick="link(\'https://aurehal.archives-ouvertes.fr/structure/read/id/'+s.docid+'\');"><i style="background:none;border:0;" class="glyphicon glyphicon-ok-circle '+icon_class+'"></i>&nbsp;'+s.name_s+'&nbsp;'+icon_type_struct+'<span class="badge">'+s.docid+'</span></h6><div onclick="link(\'https://aurehal.archives-ouvertes.fr/structure/read/id/'+s.docid+'\');"><small>'+s.acronym_s+'</small>'+(s.code_s && s.code_s!=''?'<small><i>'+s.code_s+'</i></small>':'')+(s.address_s && s.address_s!=''?'<small>'+s.address_s+'</small>':'')+'France'+(s.url_s && s.url_s!=''?'<small><a target="_blank" href="'+s.url_s+'">'+s.url_s+'</a></small>':'')+'</div></blockquote>';
+        c = c + '<h6 onclick="link(\'https://aurehal.archives-ouvertes.fr/structure/read/id/'+s.docid+'\');">';
+        c = c +   '<i style="background:none;border:0;" class="glyphicon glyphicon-ok-circle '+icon_class+'"></i>&nbsp;';
+        c = c +   '<span class="'+title_class+'">'+s.name_s+'</span>&nbsp;'+icon_type_struct;
+        c = c +   '<span class="badge ' + (is_HAL_new_user_interface ? "badge-violet" : "") + '">'+s.docid+'</span>';
+        c = c + '</h6><div onclick="link(\'https://aurehal.archives-ouvertes.fr/structure/read/id/'+s.docid+'\');">';
+        c = c +   (s.acronym_s && s.acronym_s!=''?'<small class="blockquote-footer">'+s.acronym_s+'</small>':'');
+        c = c +   (s.code_s && s.code_s!=''?'<small class="blockquote-footer"><i>'+s.code_s+'</i></small>':'');
+        c = c +   (s.address_s && s.address_s!=''?'<small class="blockquote-footer">'+s.address_s+'</small>':'')+'France';
+        c = c +   (s.url_s && s.url_s!=''?'<small class="blockquote-footer"><a target="_blank" href="'+s.url_s+'">'+s.url_s+'</a></small>':'');
+        c = c + '</div></blockquote>';
         c = c + "</div></div>";
         if (s.substructures && s.substructures.length>0) {
             c = c + writeStructures(s.substructures, level+1, lang);

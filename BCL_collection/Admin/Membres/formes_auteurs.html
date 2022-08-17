@@ -18,7 +18,11 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 <!-- <script src="../public/lazy.js"></script> is not working anymore with the new HAL GUI in January 2022, so we need to do a little 'loadScript' hack (see below...) -->
 <!-- <script src="../public/config.js"></script> is not working anymore with the new HAL GUI in January 2022, so we need to do a little 'loadScript' hack (see below...) -->
 <p><strong>Formes auteurs des membres du labo ayant au moins une publication dans HAL (y compris en dehors de la collection)&nbsp;:</strong></p>
-<p><em>Note&nbsp;: dans ce tableau, les statistiques sur les dépôts correspondent uniquement aux dépôts présents dans la collection<script>document.write(" "+my_config.code_collection);</script>.</em></p>
+<p><em id="collection_name">Note&nbsp;: dans ce tableau, les statistiques sur les dépôts correspondent uniquement aux dépôts présents dans la collection
+<script>// <![CDATA[ 
+	document.getElementById("collection_name").innerHTML += my_config.code_collection;
+// ]]></script>
+</em>.</p>
 <p id="mybiblio-requirements" class="alert alert-fixed alert-danger">Pour continuer, vous devez activer Javascript dans votre navigateur internet, puis recharger cette page.<br />Please enable Javascript in your browser, then reload this page.</p>
 <aside class="legende" style="display:none;"><strong>Légende&nbsp;:</strong>
 <div class="parti">Membre parti du laboratoire</div>
@@ -27,8 +31,7 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 <div class="date_suspecte">Date de publication en rouge = date suspecte ou affiliation incorrecte (car cette personne n'était pas membre du labo à cette date-là… Attention cependant : pour les communications à un colloque, la date affichée ici est la date du colloque, et non la date de publication des actes&nbsp;!).</div>
 <div class="inversion_nom_prenom">Nom/prénom en rouge = présence d'une forme auteur avec nom et prénom inversés.</div>
 </aside>
-<table id='liste_membres_labo' class="sortable">
-</table>
+<table id="liste_membres_labo" class="sortable"></table>
 <!-- <script src="../public/jquery.tablesorter.js"></script> is not working anymore with the new HAL GUI in January 2022, so we need to do a little 'loadScript' hack (see below...) -->
 <script>// <![CDATA[
 /**
@@ -71,8 +74,12 @@ if (lang!="fr")
 var author_forms_localization = {
 "searching":     {"fr": "Recherche en cours...",
                   "en": "Searching..."},
-"searching_dates":     {"fr": "Récupération des premières et dernières dates de dépôt et de publication...",
-                  "en": "Retrieving first and last dates of deposits and of publications..."},
+"searching_dates":      {"fr": "Récupération des premières et dernières dates de dépôt et de publication...",
+                         "en": "Retrieving first and last dates of deposits and of publications..."},
+"searching_dates_err" : {"fr": "Erreur lors de la récupération des premières et dernières dates de dépôt et de publication.",
+                         "en": "Error while retrieving first and last dates of deposits and of publications."},
+"get_nb_depots_err" :   {"fr": "Erreur lors de la récupération du nombre de dépôts pour les formes auteurs sans idhal qui sont en doublon avec une forme auteur avec idhal.",
+                         "en": "Error while retrieving the number of deposits for author forms without idhals that are in duplicate with an author form associated to an idhal."},
 "facet_limit":   {"fr": "Attention: ces résultats sont incomplets, car le paramètre facet.limit est actuellement fixé à une valeur trop basse ([param]) dans la fonction getFormesAuteurs().",
                   "en": "Warning: results are incomplete, because parameter facet.limit is currently set to a value too low ([param]) in function getFormesAuteurs()."},
 "unknown-warn":  {"fr": "Un avertissement s'est produit lors de la récupération des résultats, mais il n'y a pas de message précis associé à cet avertissement",
@@ -219,11 +226,11 @@ var author_forms_localization = {
 	$("#mybiblio-requirements").addClass('alert-warning');
 	$("#mybiblio-requirements").addClass('loading');
 	
-Promise.all(
+Promise.all([
 	loadScript("../public/lazy.js"),
 	loadScript("../public/config.js"),
 	loadScript("../public/jquery.tablesorter.js")
-).then(data => {
+]).then(data => {
 
 	/* 1) Récupération rapide et simple des infos pour les quelques formes auteurs qui ont un idhal : */
 	
@@ -336,7 +343,7 @@ Promise.all(
 				valid_id = valid_id + validClassName(forme_auteur.name);
 				output_code=output_code+"<tr class='"+(membre.date_depart ? 'parti ' : '')+(forme_non_associee_a_l_idhal?'idhal-manquant ':'')+(membre.nom_prenom_inverses ? 'inversion_nom_prenom ' : '')+(membre.idHal_s!="" ? 'avec-idhal-' + validClassName(membre.idHal_s) + ' ' : '')+"' id='"+valid_id+"'>";
 				output_code=output_code+"<td"+(!membre_officiel? " class='inconnu'":"")+">"+forme_auteur.name+"</td>";
-				output_code=output_code+"<td>"+(forme_auteur.idhal==""?"":'<span class="glyphicon glyphicon-user" data-toggle="tooltip" data-placement="auto" data-original-title="IdHal de l\'auteur"></span>&nbsp;')+forme_auteur.idhal+"</td>";
+				output_code=output_code+"<td>"+(forme_auteur.idhal==""?"":'<span class="icon-hal glyphicon glyphicon-user" data-toggle="tooltip" data-placement="auto" data-original-title="IdHal de l\'auteur"></span>&nbsp;')+forme_auteur.idhal+"</td>";
 				var name = forme_auteur.name.split(/\s/);
 				output_code=output_code+(forme_auteur.first_submit_date?"<td>"+forme_auteur.first_submit_date:"<td>")+"</td>";
 				output_code=output_code+(forme_auteur.last_submit_date?"<td>"+forme_auteur.last_submit_date:"<td>")+"</td>";
@@ -371,7 +378,7 @@ Promise.all(
 		$.ajax("https://api.archives-ouvertes.fr/search/"+my_config.code_collection, {data: query, dataType: 'json', jsonp: false, success: function( d ) {
 		  var reponses = d.facet_counts.facet_fields.authIdFullName_fs;
 		  if (reponses !== undefined) {
- 			  var index_authors = [];
+			  var index_authors = [];
 			  for (var i = 0; i < reponses.length; i+=2) {
 			    var rep = reponses[i]+'';
 			    rep = rep.split(/_FacetSep_|_JoinSep_/);
@@ -386,9 +393,15 @@ Promise.all(
 			  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,producedDateY_i,producedDateM_i,producedDateD_i"]);
 			  }
 			
-  			  Object.keys(index_authors).forEach(function (author_id, i) {
-					update_dates_for_author(index_authors, author_id, "sans-idhal-"+validClassName(index_authors[author_id].full_name));
-			  });
+			  try {
+			    Object.keys(index_authors).forEach(function (author_id, i) {
+			      update_dates_for_author(index_authors, author_id, "sans-idhal-"+validClassName(index_authors[author_id].full_name));
+			    });
+			  } catch {
+					$("#mybiblio-requirements").addClass('alert-warning');
+			    $('#mybiblio-requirements').append("<br/>"+author_forms_localization['searching_dates_err'][lang]);
+					warnings.push({warning: "searching_dates_err"});
+			  }
 		  }
 		  
 		  /* 3) Récupération du nombre de dépôts pour les formes auteurs sans idhal qui sont en doublon avec une forme auteur avec idhal : */
@@ -425,17 +438,31 @@ Promise.all(
 					  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,producedDateY_i,producedDateM_i,producedDateD_i"]);
 					  }
 					  
-		  			  Object.keys(index_authors).forEach(function (author_id, i) {
-		  			  	var className = "doublon-"+validClassName(index_authors[author_id].full_name);
-						update_dates_for_author(index_authors, author_id, className);
-						$('tr#'+className+' td:nth-child(5)').html( ( author_id ? "<a target='blank' class='btn btn-default btn-xs pull-right' href='https://hal.archives-ouvertes.fr/"+my_config.code_collection+"/search/index/?q=authId_i%3A"+author_id+"&sort=submittedDate_tdate+desc'>"+index_authors[author_id].nb_depots+"</a>" : index_authors[author_id].nb_depots ) );
-					  });
+					  try {
+					    Object.keys(index_authors).forEach(function (author_id, i) {
+					      var className = "doublon-"+validClassName(index_authors[author_id].full_name);
+					      update_dates_for_author(index_authors, author_id, className);
+					      $('tr#'+className+' td:nth-child(5)').html( ( author_id ? "<a target='blank' class='btn btn-default btn-xs pull-right' href='https://hal.archives-ouvertes.fr/"+my_config.code_collection+"/search/index/?q=authId_i%3A"+author_id+"&sort=submittedDate_tdate+desc'>"+index_authors[author_id].nb_depots+"</a>" : index_authors[author_id].nb_depots ) );
+					    });
+					  } catch {
+					    $("#mybiblio-requirements").addClass('alert-warning');
+					    $('#mybiblio-requirements').append("<br/>"+author_forms_localization['get_nb_depots_err'][lang]);
+					    warnings.push({warning: "get_nb_depots_err"});
+					  }
 				  }
 				  $('#mybiblio-requirements').html("");
 				  $("#mybiblio-requirements").removeClass('loading');
-				  if (!warnings || !warnings.length)
+				  if (!warnings || !warnings.length) {
 				    $('#mybiblio-requirements').hide();
-				    
+				  } else {
+						$("#mybiblio-requirements").addClass('alert-warning');
+				    warnings.forEach(function (e) {
+				      if (author_forms_localization[e.warning])
+				        $('#mybiblio-requirements').append(author_forms_localization[e.warning][lang].replace("[param]", e.param)+"<br/>");
+				      else
+				        $('#mybiblio-requirements').append(author_forms_localization['unknown-warn'][lang]+"<br/>");
+				    });
+				  }
 				  $(function() {
 				    $("#liste_membres_labo").tablesorter();
 				  });

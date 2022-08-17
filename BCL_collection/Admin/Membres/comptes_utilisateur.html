@@ -117,7 +117,7 @@ script.onload = () =>
 				   	  }
 				      if (found) {
 				        accounts_found++;		          
-				        $('#liste_membres_labo > tbody:last-child').append('<tr id="author_'+parseInt(r.user_id, 10)+'" class="loading">'+bdd_content+'<td class="'+css_classes+'"><span class="badge">'+r.user_id+'</span></td><td class="'+css_classes+'">'+r.user_name+'</td><td class="'+css_classes+' address">'+r.email+'</td><td class="'+css_classes+'">'+r.label+'</td></tr>');
+				        $('#liste_membres_labo > tbody:last-child').append('<tr id="author_'+parseInt(r.user_id, 10)+'" class="loading">'+bdd_content+'<td class="'+css_classes+'"><span class="badge doc-identifier">'+r.user_id+'</span></td><td class="'+css_classes+'">'+r.user_name+'</td><td class="'+css_classes+' address">'+r.email+'</td><td class="'+css_classes+'">'+r.label+'</td></tr>');
 				        getHALUserStats(r.user_id, function(result) {
 				        	result.user_id = parseInt(result.user_id, 10);
 				        	$('tr#author_'+result.user_id).removeClass("loading");
