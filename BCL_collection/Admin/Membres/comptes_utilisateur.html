@@ -7,9 +7,9 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 <link rel="stylesheet" href="http://static.ccsd.cnrs.fr/v3/css/bootstrap.css" type="text/css" media="screen">
 <link rel="stylesheet" href="http://static.ccsd.cnrs.fr/css/ccsd.css" type="text/css" media="screen">
 <link rel="stylesheet" href="http://aurehal.archives-ouvertes.fr/css/hal.css" type="text/css" media="screen">
-<link href="https://hal.archives-ouvertes.fr/BCL/public/style.css" rel="stylesheet" type="text/css" >
+<link href="https://hal.science/BCL/public/style.css" rel="stylesheet" type="text/css" >
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-<script src="https://hal.archives-ouvertes.fr/BCL/public/collection_hal.js"></script>
+<script src="https://hal.science/BCL/public/collection_hal.js"></script>
 </head>
 <body>
 
@@ -121,7 +121,7 @@ script.onload = () =>
 				        getHALUserStats(r.user_id, function(result) {
 				        	result.user_id = parseInt(result.user_id, 10);
 				        	$('tr#author_'+result.user_id).removeClass("loading");
-				        	$('tr#author_'+result.user_id).append('<td class="'+css_classes+'"><a target="blank" class="btn '+(result.nbSubmit>0?"btn-primary":"btn-default")+' btn-xs pull-right" href="https://hal.archives-ouvertes.fr/search/index/?qa%5BcontributorId_i%5D%5B%5D=' + result.user_id + '&submit_advanced=Rechercher&rows=30&sort=submittedDate_tdate+desc">'+result.nbSubmit+'</a></td><td class="'+css_classes+'">'+(result.firstSubmit?result.firstSubmit:'')+'</td><td class="'+css_classes+'">'+(result.lastSubmit?result.lastSubmit:'')+'</td>');
+				        	$('tr#author_'+result.user_id).append('<td class="'+css_classes+'"><a target="blank" class="btn '+(result.nbSubmit>0?"btn-primary":"btn-default")+' btn-xs pull-right" href="https://hal.science/search/index/?qa%5BcontributorId_i%5D%5B%5D=' + result.user_id + '&submit_advanced=Rechercher&rows=30&sort=submittedDate_tdate+desc">'+result.nbSubmit+'</a></td><td class="'+css_classes+'">'+(result.firstSubmit?result.firstSubmit:'')+'</td><td class="'+css_classes+'">'+(result.lastSubmit?result.lastSubmit:'')+'</td>');
 				        }, function(errno) {
 				        	$('tr#author_'+result.user_id).removeClass("loading");
 				        	$('tr#author_'+result.user_id).append('<td colspan="3">'+user_accounts_localization['searching_sub_err'][lang].replace("[param]", r.user_id)+'</td>');

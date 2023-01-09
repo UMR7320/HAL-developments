@@ -9,11 +9,11 @@ Depuis la mise en place de la nouvelle interface de HAL (janvier 2022), il se po
 
 # Résumé #
 
-Ce dossier contient tous les fichiers utilisés par la [Collection HAL du laboratoire BCL](https://hal.archives-ouvertes.fr/BCL/)
+Ce dossier contient tous les fichiers utilisés par la [Collection HAL du laboratoire BCL](https://hal.science/BCL/)
 
 # Dépendances #
 
-Ces fichiers sont prévus pour être utilisés sur une Collection de la plateforme [HAL](https://hal.archives-ouvertes.fr).
+Ces fichiers sont prévus pour être utilisés sur une Collection de la plateforme [HAL](https://hal.science).
 
 Certains de ces codes javascript utilisent la librairie [Lazy.js](http://danieltao.com/lazy.js/) de Daniel Tao ; celle-ci est donc fournie dans le sous-dossier Ressources/, mais vous pourrez éventuellement la remplacer par une version plus récente si nécessaire.
 

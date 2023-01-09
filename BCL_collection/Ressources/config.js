@@ -18,11 +18,11 @@
 //////////////////////////////////////////////////////////////////////
 
 // personnalisation du menu de navigation HAL (navbar fixed) :
-$("body > div.navbar > div.navbar-collapse > ul.navbar-nav > li:last-child").before("<li class='ladoc active'><a href='https://hal.archives-ouvertes.fr/section/documentation' title='Documentation HAL' style='font-weight: bold;'>Doc</a></li>");
+$("body > div.navbar > div.navbar-collapse > ul.navbar-nav > li:last-child").before("<li class='ladoc active'><a href='https://doc.archives-ouvertes.fr' title='Documentation HAL' style='font-weight: bold;'>Doc</a></li>");
 
 // personnalisation de l'encart en haut à droite (lorsque l'utilisateur est connecte) :
 $("body > div.navbar > div.navbar-collapse > div.navbar-right > ul > li > ul > li:first-child > table td.text-left a").removeClass();
-$("body > div.navbar > div.navbar-collapse > div.navbar-right > ul > li > ul > li:first-child > table td.text-left a:first-of-type").replaceWith("<a href='https://hal.archives-ouvertes.fr/user/space' class='btn btn-primary btn-xs'>Mon espace</a> <a href='https://hal.archives-ouvertes.fr/user/submissions' class='btn btn-primary btn-xs'>Mes d&eacute;p&ocirc;ts</a>");
+$("body > div.navbar > div.navbar-collapse > div.navbar-right > ul > li > ul > li:first-child > table td.text-left a:first-of-type").replaceWith("<a href='https://hal.science/user/space' class='btn btn-primary btn-xs'>Mon espace</a> <a href='https://hal.science/user/submissions' class='btn btn-primary btn-xs'>Mes d&eacute;p&ocirc;ts</a>");
 
 // personnalisation des _blank sur les liens hypertextes (une fois la page finie de charger) :
 $(function(){

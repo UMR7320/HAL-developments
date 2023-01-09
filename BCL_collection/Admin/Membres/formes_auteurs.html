@@ -7,9 +7,9 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 <link rel="stylesheet" href="http://static.ccsd.cnrs.fr/v3/css/bootstrap.css" type="text/css" media="screen">
 <link rel="stylesheet" href="http://static.ccsd.cnrs.fr/css/ccsd.css" type="text/css" media="screen">
 <link rel="stylesheet" href="http://aurehal.archives-ouvertes.fr/css/hal.css" type="text/css" media="screen">
-<link href="https://hal.archives-ouvertes.fr/BCL/public/style.css" rel="stylesheet" type="text/css" >
+<link href="https://hal.science/BCL/public/style.css" rel="stylesheet" type="text/css" >
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-<script src="https://hal.archives-ouvertes.fr/BCL/public/collection_hal.js"></script>
+<script src="https://hal.science/BCL/public/collection_hal.js"></script>
 </head>
 <body>
 
@@ -347,7 +347,7 @@ Promise.all([
 				var name = forme_auteur.name.split(/\s/);
 				output_code=output_code+(forme_auteur.first_submit_date?"<td>"+forme_auteur.first_submit_date:"<td>")+"</td>";
 				output_code=output_code+(forme_auteur.last_submit_date?"<td>"+forme_auteur.last_submit_date:"<td>")+"</td>";
-				output_code=output_code+"<td><a target='blank' class='btn "+(forme_auteur.nb_depots>0?"btn-primary":"btn-default")+" btn-xs pull-right' href='https://hal.archives-ouvertes.fr/"+my_config.code_collection+"/search/index/?"+ ( forme_auteur.idhal=="" ? "qa%5BauthFullName_s%5D%5B%5D=%22"+encodeURIComponent(name[name.length-1]+" "+name.splice(0,name.length-1).join(" "))+"%22" : "&qa%5BauthIdHal_s%5D%5B%5D="+forme_auteur.idhal ) + "&submit_advanced=Rechercher&rows=30&sort=submittedDate_tdate+desc'>"+forme_auteur.nb_depots+"</a></td>";
+				output_code=output_code+"<td><a target='blank' class='btn "+(forme_auteur.nb_depots>0?"btn-primary":"btn-default")+" btn-xs pull-right' href='/"+my_config.code_collection+"/search/index/?"+ ( forme_auteur.idhal=="" ? "qa%5BauthFullName_s%5D%5B%5D=%22"+encodeURIComponent(name[name.length-1]+" "+name.splice(0,name.length-1).join(" "))+"%22" : "&qa%5BauthIdHal_s%5D%5B%5D="+forme_auteur.idhal ) + "&submit_advanced=Rechercher&rows=30&sort=submittedDate_tdate+desc'>"+forme_auteur.nb_depots+"</a></td>";
 				output_code=output_code+(forme_auteur.first_publication_date?"<td>"+forme_auteur.first_publication_date:"<td>")+"</td>";
 				output_code=output_code+(forme_auteur.last_publication_date?"<td>"+forme_auteur.last_publication_date:"<td>")+"</td>";
 				output_code=output_code+(membre.date_arrivee?"<td>"+membre.date_arrivee:"<td>")+"</td>";
@@ -442,7 +442,7 @@ Promise.all([
 					    Object.keys(index_authors).forEach(function (author_id, i) {
 					      var className = "doublon-"+validClassName(index_authors[author_id].full_name);
 					      update_dates_for_author(index_authors, author_id, className);
-					      $('tr#'+className+' td:nth-child(5)').html( ( author_id ? "<a target='blank' class='btn btn-default btn-xs pull-right' href='https://hal.archives-ouvertes.fr/"+my_config.code_collection+"/search/index/?q=authId_i%3A"+author_id+"&sort=submittedDate_tdate+desc'>"+index_authors[author_id].nb_depots+"</a>" : index_authors[author_id].nb_depots ) );
+					      $('tr#'+className+' td:nth-child(5)').html( ( author_id ? "<a target='blank' class='btn btn-default btn-xs pull-right' href='/"+my_config.code_collection+"/search/index/?q=authId_i%3A"+author_id+"&sort=submittedDate_tdate+desc'>"+index_authors[author_id].nb_depots+"</a>" : index_authors[author_id].nb_depots ) );
 					    });
 					  } catch {
 					    $("#mybiblio-requirements").addClass('alert-warning');

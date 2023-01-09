@@ -6,7 +6,7 @@ La [version en français](#contenu) est située à la fin de ce document.
 
 The following tools were developped at [Laboratoire BCL](https://bcl.cnrs.fr):
 
-- **BCL_collection**: all the files used by the [HAL collection of BCL's laboratory](https://hal.archives-ouvertes.fr/BCL/)
+- **BCL_collection**: all the files used by the [HAL collection of BCL's laboratory](https://hal.science/BCL/)
 
 - **HTML_bibliography_export**: a Python script generating a clean bibliography in HTML format (that can then be copy/pasted in Ms Word for example). Example of usage here : http://bcl.unice.fr/hal/biblio.php?q=(collCode_s:BCL)
 
@@ -20,7 +20,7 @@ The following tools were developped at [Laboratoire BCL](https://bcl.cnrs.fr):
 
 Les outils suivants ont été développés au [Laboratoire BCL](https://bcl.cnrs.fr):
 
-- **BCL_collection**: tous les fichiers utilisés par la [Collection HAL du laboratoire BCL](https://hal.archives-ouvertes.fr/BCL/)
+- **BCL_collection**: tous les fichiers utilisés par la [Collection HAL du laboratoire BCL](https://hal.science/BCL/)
 
 - **HTML_bibliography_export**: script Python qui génère une bibliographie propre, au format HTML (qui peut ensuite être copié/collé dans Ms Word par exemple). Exemple d'utilisation ici : http://bcl.unice.fr/hal/biblio.php?q=(collCode_s:BCL)
 

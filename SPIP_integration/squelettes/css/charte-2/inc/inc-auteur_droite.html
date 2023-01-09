@@ -31,8 +31,8 @@
 			$PRENOM=strtolower(unaccent("[(#PRENOM|replace{'"', })]"));
 			$search_url_base .= "&qa[authFirstName_t][]=".urlencode($PRENOM)."&qa[authLastName_t][]=".urlencode($NOM);
 		}
-		$url_plus_de_resultats_BCL = "https://hal.archives-ouvertes.fr/BCL/".$search_url_base;
-		$url_plus_de_resultats_HAL = "https://hal.archives-ouvertes.fr/".$search_url_base;
+		$url_plus_de_resultats_BCL = "https://hal-cnrs.archives-ouvertes.fr/BCL/".$search_url_base;
+		$url_plus_de_resultats_HAL = "https://hal.science/".$search_url_base;
 	?>
 				
 	[(#GET{derniers_depots}|supprimer_tags|oui)

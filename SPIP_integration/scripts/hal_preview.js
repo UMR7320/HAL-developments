@@ -28,7 +28,7 @@ $("#res_script dd.Titre a").mediabox({
 			hal_id = hal_id[1];
 		else
 			hal_id = "Voir sur HAL";
-	    return '<a href="'+url+'" target="_blank"><img class="logo hal" src="https://hal.archives-ouvertes.fr/img/favicon.png" />' + hal_id + '</a>';
+	    return '<a href="'+url+'" target="_blank"><img class="logo hal" src="https://hal.science/favicon/favicon-32x32.png" />' + hal_id + '</a>';
 	},
 	
 	onShow: function(){

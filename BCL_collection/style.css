@@ -148,11 +148,11 @@ text-decoration: none;
 .site-header .section-corps table, /* HAL's new user interface */
 #container .logo table { /* HAL's old user interface */
 height:125px;
-background: #782219 url('https://hal.archives-ouvertes.fr/BCL/public/background_hal.jpg') repeat-x;
+background: #782219 url('/BCL/public/background_hal.jpg') repeat-x;
 }
 .site-header .section-corps table tr,
 #container .logo table tr {
-background: url('https://hal.archives-ouvertes.fr/BCL/public/dessin_HAL.jpg') no-repeat 23em 100%;
+background: url('/BCL/public/dessin_HAL.jpg') no-repeat 23em 100%;
 display: block;
 position: relative;
 }
@@ -416,7 +416,7 @@ text-decoration:underline;
 text-decoration: underline;
 }
 #mybiblio-requirements.loading {
-background: url(https://hal.archives-ouvertes.fr/BCL/public/loading_96_32.gif) no-repeat 0% 50%;
+background: url(/BCL/public/loading_96_32.gif) no-repeat 0% 50%;
 padding-left: 106px;
 min-height: 64px;
 }
@@ -424,14 +424,14 @@ min-height: 64px;
 text-decoration: underline;
 }
 #flash-messages .mybiblio.alert-warning {
-background-image: url(https://hal.archives-ouvertes.fr/BCL/public/warning_64.gif);
+background-image: url(/BCL/public/warning_64.gif);
 background-repeat: no-repeat;
 background-position: 10px 50%;
 min-height: 64px;
 padding-left: 84px;
 }
 #mybiblio-requirements.alert-danger {
-background-image: url(https://hal.archives-ouvertes.fr/BCL/public/interdit.png);
+background-image: url(/BCL/public/interdit.png);
 background-repeat: no-repeat;
 background-position: 10px 50%;
 min-height: 80px;
@@ -481,7 +481,7 @@ vertical-align: bottom;
 padding: 8px 7px 16px;
 }
 #mybiblio-requirements .btn-group.loading {
-background: url(https://hal.archives-ouvertes.fr/BCL/public/loading_32.gif) no-repeat 8px 50%;
+background: url(/BCL/public/loading_32.gif) no-repeat 8px 50%;
 padding-left: 48px;
 height: 52px; /* min-height doesn't work on table cells */
 }
@@ -607,7 +607,7 @@ tr.old td:not(.bdd-labo) {
 	background-color: #fcf8e3;
 }
 #liste_membres_labo tr.loading td:last-child:after {
-	background: url(https://hal.archives-ouvertes.fr/BCL/public/loading_96_32.gif) no-repeat 0% 50%;
+	background: url(/BCL/public/loading_96_32.gif) no-repeat 0% 50%;
 	content: 'Recherche des dépôts associés...';
 	zoom: 0.6;
 	position: relative;

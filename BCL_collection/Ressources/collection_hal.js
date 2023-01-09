@@ -230,6 +230,7 @@ currentUser.retrieve = function (callback) {
 
 	var alternativeURLs = [
 		location.protocol+"//"+location.host+"/user/",
+		"https://hal.science/user/",
 		"https://hal.archives-ouvertes.fr/user/",
 		location.protocol+"//"+location.hostname+"/user/"
 	];
@@ -406,6 +407,7 @@ currentUser.retrieve_idhal = function (callback) {
 
 	var alternativeURLs = [
 		location.protocol + "//" + location.host + "/user/idhal/",
+		"https://hal.science/user/idhal/",
 		"https://hal.archives-ouvertes.fr/user/idhal/",
 		location.protocol + "//" + location.hostname + "/user/idhal/"
 	];
@@ -970,7 +972,7 @@ function writeStructures(structures, level, lang) {
         }
         var icon_type_struct = '<span class="'+icon_type_struct_class+'">'+type_s_translation+'</span>';
         c = c + '<blockquote class="structure-element-'+s.type_s+' '+block_class+'" title="'+titre+'">';
-        c = c + '<div class="boutons_supplementaires"><a class="btn btn-primary" target="_blank" href="https://hal.archives-ouvertes.fr/search/index/q/*/structId_i/'+s.docid+'">Voir les d&eacute;p&ocirc;ts associ&eacute;s</a></div>';
+        c = c + '<div class="boutons_supplementaires"><a class="btn btn-primary" target="_blank" href="https://hal.science/search/index/q/*/structId_i/'+s.docid+'">Voir les d&eacute;p&ocirc;ts associ&eacute;s</a></div>';
         c = c + '<h6 onclick="link(\'https://aurehal.archives-ouvertes.fr/structure/read/id/'+s.docid+'\');">';
         c = c +   '<i style="background:none;border:0;" class="glyphicon glyphicon-ok-circle '+icon_class+'"></i>&nbsp;';
         c = c +   '<span class="'+title_class+'">'+s.name_s+'</span>&nbsp;'+icon_type_struct;
