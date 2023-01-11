@@ -556,7 +556,7 @@ function getIdHAL(nom_de_la_collection, full_name, callback_success, callback_er
             }
           }
           // user not found => let's try outside of the collection :
-          $.ajax("https://api.archives-ouvertes.fr/ref/author", {data: 'q=fullName_t:'+encodeURIComponent(full_name_sci)+'&wt=json&rows=2000&fl=docid,fullName_s,email_s,idHal_i,idHal_s,structureId_i,structure_s,valid_s&fq=idHal_i:(-0)&group=true&group.field=idHal_i&group.limit=200&sort=idHal_i+asc', dataType: 'json', jsonp: false, error: function() {
+          $.ajax("https://api.archives-ouvertes.fr/ref/author", {data: 'q=fullName_t:'+encodeURIComponent(full_name_sci)+'&wt=json&rows=2000&fl=docid,fullName_s,email_s,idHal_i,idHal_s,structureId_i,structure_s,valid_s&fq=idHal_i:[*+TO+*]&group=true&group.field=idHal_i&group.limit=200&sort=idHal_i+asc', dataType: 'json', jsonp: false, error: function() {
                 callback_error(-4,full_name);
           }, success: function( d ) {
               if (d.error || !d.grouped) {
@@ -625,9 +625,9 @@ function searchFormeAuteur(criteres, callback_success, callback_error, limit) {
 		      criteres_hal.push("email_s:"+MD5(normalized_string));
 		  } else {
 		    if (c == "prenom")
-		      criteres_hal.push("firstName_sci:(%22"+encodeURIComponent(normalized_string)+"%22%20OR%20%22"+encodeURIComponent(normalized_string.charAt(0))+"%22)");
+		      criteres_hal.push("firstName_t:(%22"+encodeURIComponent(normalized_string)+"%22%20OR%20%22"+encodeURIComponent(normalized_string.charAt(0))+"%22)");
 		    if (c == "nom")
-		      criteres_hal.push("lastName_sci:%22"+encodeURIComponent(normalized_string) + "%22");
+		      criteres_hal.push("lastName_t:%22"+encodeURIComponent(normalized_string) + "%22");
 		    if (c == "fullname")
 			  criteres_hal.push("fullName_t:%22" + encodeURIComponent(normalized_string) + "%22");
 		    if (c == "status")

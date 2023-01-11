@@ -60,13 +60,13 @@ var extra_criteria_for_query2_and_3 = "";
    (si cette info ne vous est pas utile, vous pouvez mettre les 2 lignes ci-dessous en commentaires afin d'améliorer les performances)
 */
 var extra_criteria_for_query1 = extra_criteria_for_query1 + '&facet.pivot=authIdHal_s,submittedDateY_i,submittedDateM_i,submittedDateD_i&facet.sort=index';
-var extra_criteria_for_query2_and_3 = extra_criteria_for_query2_and_3 + '&facet.pivot=authId_i,submittedDateY_i,submittedDateM_i,submittedDateD_i&facet.sort=index';
+var extra_criteria_for_query2_and_3 = extra_criteria_for_query2_and_3 + '&facet.pivot=authIdForm_i,submittedDateY_i,submittedDateM_i,submittedDateD_i&facet.sort=index';
 
 /* facettes supplémentaires permettant de récupérer les dates des premières et dernières publications associées à chaque forme auteur : 
    (si cette info ne vous est pas utile, vous pouvez mettre les 2 lignes ci-dessous en commentaires afin d'améliorer les performances)
 */
 var extra_criteria_for_query1 = extra_criteria_for_query1 + '&facet.pivot=authIdHal_s,producedDateY_i,producedDateM_i,producedDateD_i&facet.sort=index';
-var extra_criteria_for_query2_and_3 = extra_criteria_for_query2_and_3 + '&facet.pivot=authId_i,producedDateY_i,producedDateM_i,producedDateD_i&facet.sort=index';
+var extra_criteria_for_query2_and_3 = extra_criteria_for_query2_and_3 + '&facet.pivot=authIdForm_i,producedDateY_i,producedDateM_i,producedDateD_i&facet.sort=index';
 
 // Localization: currently available languages are "en" and "fr".
 var lang=getCurrentLanguage();
@@ -312,9 +312,12 @@ Promise.all([
 		   (pour des questions d'optimisation, on présuppose ici que les facets sont triées par ordre lexical, c.a.d. &facet.sort=index)
 		*/
 		if (!jQuery.isEmptyObject(index_membres_par_idhal_s) && facet_pivot_raw_data && facet_pivot_raw_data.facet_counts.facet_pivot) {
-			
 			compute_first_and_last_dates_for_query_1(index_membres_par_idhal_s, facet_pivot_raw_data.facet_counts.facet_pivot["authIdHal_s,submittedDateY_i,submittedDateM_i,submittedDateD_i"]);
 			compute_first_and_last_dates_for_query_1(index_membres_par_idhal_s, facet_pivot_raw_data.facet_counts.facet_pivot["authIdHal_s,producedDateY_i,producedDateM_i,producedDateD_i"]);
+			if (facet_pivot_raw_data.facet_counts.facet_pivot["authIdHal_s,submittedDateY_i,submittedDateM_i,submittedDateD_i"].length == 0
+			 && facet_pivot_raw_data.facet_counts.facet_pivot["authIdHal_s,producedDateY_i,producedDateM_i,producedDateD_i"].length == 0) {
+				display_warnings({warning: "no_dates_in_empty_pivots_1b"});
+			}
 		}
 		
 		for (var i = 0; i < liste_sans_doublons.length; i++) {
@@ -392,20 +395,21 @@ Promise.all([
 			for (var i = 0; i < membres_sans_idhal.length; i++) {
 				$('tr#doublon-'+validClassName(membres_sans_idhal[i].name)+' td:nth-child(5)').html(membres_sans_idhal[i].nb_depots);
 			}
-			query = 'q=authFullName_t:' + query + '&sort=submittedDate_tdate%20desc&fl=submittedDate_s&rows=0&wt=json&facet=true&facet.field=authIdFullName_fs&facet.mincount=1&facet.limit='+facet_limit_for_query2_and_3 + extra_criteria_for_query2_and_3;
+			query = 'q=authFullName_t:' + query + '&sort=submittedDate_tdate%20desc&fl=submittedDate_s&rows=0&wt=json&facet=true&facet.field=authFullNameIdFormPerson_fs&facet.mincount=1&facet.limit='+facet_limit_for_query2_and_3 + extra_criteria_for_query2_and_3;
 			// console.log(query);
 			$.ajax("https://api.archives-ouvertes.fr/search/"+my_config.code_collection, {data: query, dataType: 'json', jsonp: false, success: function( d ) {
-				var reponses = d.facet_counts.facet_fields.authIdFullName_fs;
+				var reponses = d.facet_counts.facet_fields.authFullNameIdFormPerson_fs;
 				if (reponses !== undefined) {
 					var index_authors = [];
 					var invalid_authorIDs = [];
 					for (var i = 0; i < reponses.length; i+=2) {
 						var rep = reponses[i]+'';
 						rep = rep.split(/_FacetSep_|_JoinSep_/);
-						var name = rep[1].split(/\s/);
-						var authorID = parseInt(rep[0], 10);
-						if (authorID == rep[0] && authorID > 0)
-							index_authors[rep[0]]={"full_name": name.splice(1).join(" ")+" "+name[0]};
+						var name = rep[0].split(/\s/);
+						var id = rep[1].split('-')[0];
+						var authorID = parseInt(id, 10);
+						if (authorID == id && authorID > 0)
+							index_authors[id]={"full_name": name.splice(1).join(" ")+" "+name[0]};
 						else
 							invalid_authorIDs.push(authorID + ": " + name);
 					}
@@ -416,8 +420,12 @@ Promise.all([
 					/* Pour des questions d'optimisation, on présuppose ici que les facets sont triées par ordre lexical, c.a.d. &facet.sort=index : */
 
 					if (d && d.facet_counts.facet_pivot) {
-						compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,submittedDateY_i,submittedDateM_i,submittedDateD_i"]);
-						compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,producedDateY_i,producedDateM_i,producedDateD_i"]);
+						compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authIdForm_i,submittedDateY_i,submittedDateM_i,submittedDateD_i"]);
+						compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authIdForm_i,producedDateY_i,producedDateM_i,producedDateD_i"]);
+						if (d.facet_counts.facet_pivot["authIdForm_i,submittedDateY_i,submittedDateM_i,submittedDateD_i"].length == 0
+						 && d.facet_counts.facet_pivot["authIdForm_i,producedDateY_i,producedDateM_i,producedDateD_i"].length == 0) {
+							display_warnings({warning: "no_dates_in_empty_pivots_2"});
+						}
 					}
 				
 					var author_dates_errors = [];
@@ -458,7 +466,7 @@ Promise.all([
 								for (var j = 0; j < id_structures.length; j++)
 									if (rep[2]==id_structures[j]) {
 										var name = rep[1].split(/\s/);
-										index_authors[rep[0]]={"full_name": name.splice(1).join(" ")+" "+name[0], "nb_depots": reponses[i+1]};
+										index_authors[rep[0].split('-')[0]]={"full_name": name.splice(1).join(" ")+" "+name[0], "nb_depots": reponses[i+1]};
 										break;
 									}
 							}
@@ -466,15 +474,19 @@ Promise.all([
 							/* Pour des questions d'optimisation, on présuppose ici que les facets sont triées par ordre lexical, c.a.d. &facet.sort=index : */
 			
 							if (d && d.facet_counts.facet_pivot) {
-								compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,submittedDateY_i,submittedDateM_i,submittedDateD_i"]);
-								compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,producedDateY_i,producedDateM_i,producedDateD_i"]);
+								compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authIdForm_i,submittedDateY_i,submittedDateM_i,submittedDateD_i"]);
+								compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authIdForm_i,producedDateY_i,producedDateM_i,producedDateD_i"]);
+								if (d.facet_counts.facet_pivot["authIdForm_i,submittedDateY_i,submittedDateM_i,submittedDateD_i"].length == 0
+								 && d.facet_counts.facet_pivot["authIdForm_i,producedDateY_i,producedDateM_i,producedDateD_i"].length == 0) {
+									display_warnings({warning: "no_dates_in_empty_pivots_3"});
+								}
 							}
 							
 							try {
 								Object.keys(index_authors).forEach(function (author_id, i) {
 									var className = "doublon-"+validClassName(index_authors[author_id].full_name);
 									update_dates_for_author(index_authors, author_id, className);
-									$('tr#'+className+' td:nth-child(5)').html( ( author_id ? "<a target='blank' class='btn btn-default btn-xs pull-right' href='/"+my_config.code_collection+"/search/index/?q=authId_i%3A"+author_id+"&sort=submittedDate_tdate+desc'>"+index_authors[author_id].nb_depots+"</a>" : index_authors[author_id].nb_depots ) );
+									$('tr#'+className+' td:nth-child(5)').html( ( author_id ? "<a target='blank' class='btn btn-default btn-xs pull-right' href='/"+my_config.code_collection+"/search/index/?q=authIdForm_i%3A"+author_id+"&sort=submittedDate_tdate+desc'>"+index_authors[author_id].nb_depots+"</a>" : index_authors[author_id].nb_depots ) );
 								});
 							} catch {
 								display_warnings({warning: "get_nb_depots_err"});

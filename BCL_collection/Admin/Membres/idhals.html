@@ -98,8 +98,15 @@ script.onload = () =>
 				Object.values(membre).forEach(function (c) { bdd_content=bdd_content+"<td class='bdd-labo'>"+c+"</td>" });
 				if (result) {
 				   result.forEach(function (r) {
-				      author_forms_found++;		          
-				      $('#liste_membres_labo > tbody:last-child').append('<tr class="'+r.valid_s.toLowerCase()+'">'+bdd_content+'<td class="bdd-hal"><span class="badge">'+r.docid+'</span></td><td class="bdd-hal">'+r.fullName_s+'</td><td class="bdd-hal address">'+(r.emailDomain_s ? r.emailDomain_s : '')+'</td><td class="bdd-hal idhal">'+(r.idHal_i ? r.idHal_i : '')+'</td><td class="bdd-hal">'+(r.idHal_s ? r.idHal_s : '')+'</td><td class="bdd-hal">'+r.valid_s+'</td><td class="bdd-hal">'+r.dateLastIndexed_tdate+'</td></tr>');
+				      author_forms_found++;
+				      var form_id = r.docid.split('-')[0];
+				      if (r.docid.split('-').length == 2) {
+				        var hal_id = r.docid.split('-')[1];
+				        if (parseInt(hal_id, 10) == hal_id && hal_id > 0) {
+				          r.idHal_i = hal_id;
+				        }
+				      }
+				      $('#liste_membres_labo > tbody:last-child').append('<tr class="'+r.valid_s.toLowerCase()+'">'+bdd_content+'<td class="bdd-hal"><span class="badge">'+form_id+'</span></td><td class="bdd-hal">'+r.fullName_s+'</td><td class="bdd-hal address">'+(r.emailDomain_s ? r.emailDomain_s : '')+'</td><td class="bdd-hal idhal">'+(r.idHal_i ? r.idHal_i : '')+'</td><td class="bdd-hal">'+(r.idHal_s ? r.idHal_s : '')+'</td><td class="bdd-hal">'+r.valid_s+'</td><td class="bdd-hal">'+r.dateLastIndexed_tdate+'</td></tr>');
 				    }); // result.forEach() 
 				} // result not null
 				if (!author_forms_found) {
