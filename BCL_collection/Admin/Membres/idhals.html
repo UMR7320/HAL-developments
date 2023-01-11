@@ -114,8 +114,8 @@ script.onload = () =>
 					}
 					$('#show_empty_lines').show();
 				}
-			}, function (errno) {
-				$('#mybiblio-requirements').append("<br/>ERROR searching author "+membre.nom+" "+membre.prenom+".");
+			}, function (errno, foo, data) {
+				$('#mybiblio-requirements').append("<br/>ERROR searching author "+membre.nom+" "+membre.prenom+": <br/>"+data.error.msg);
 				$("#mybiblio-requirements").addClass('alert-danger');
 				$("#mybiblio-requirements").removeClass('alert-warning');
 				nbRecherchesJusqueIci++;

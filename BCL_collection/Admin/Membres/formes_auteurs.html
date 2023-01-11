@@ -15,6 +15,7 @@ Le but des quelques lignes ci-dessous est simplement de mimer la structure du si
 
 <!-- copier/coller dans HAL le code ci-dessous : -->
 
+
 <!-- <script src="../public/lazy.js"></script> is not working anymore with the new HAL GUI in January 2022, so we need to do a little 'loadScript' hack (see below...) -->
 <!-- <script src="../public/config.js"></script> is not working anymore with the new HAL GUI in January 2022, so we need to do a little 'loadScript' hack (see below...) -->
 <p><strong>Formes auteurs des membres du labo ayant au moins une publication dans HAL (y compris en dehors de la collection)&nbsp;:</strong></p>
@@ -76,8 +77,14 @@ var author_forms_localization = {
                   "en": "Searching..."},
 "searching_dates":      {"fr": "Récupération des premières et dernières dates de dépôt et de publication...",
                          "en": "Retrieving first and last dates of deposits and of publications..."},
-"searching_dates_err" : {"fr": "Erreur lors de la récupération des premières et dernières dates de dépôt et de publication.",
-                         "en": "Error while retrieving first and last dates of deposits and of publications."},
+"retrieving_lab_staff_err":
+                        {"fr": "Erreur lors de la récupération de la liste des membres du labo.",
+                         "en": "Error while retrieving lab's members list."},
+"retrieving_author_forms_err":
+                        {"fr": "Erreur lors de la récupération des formes auteurs&nbsp;: [param]",
+                         "en": "Error while retrieving author forms: [param]"},
+"searching_dates_err" : {"fr": "Erreur lors de la récupération des premières et dernières dates de dépôt et de publication&nbsp;: [param]",
+                         "en": "Error while retrieving first and last dates of deposits and of publications: [param]"},
 "get_nb_depots_err" :   {"fr": "Erreur lors de la récupération du nombre de dépôts pour les formes auteurs sans idhal qui sont en doublon avec une forme auteur avec idhal.",
                          "en": "Error while retrieving the number of deposits for author forms without idhals that are in duplicate with an author form associated to an idhal."},
 "facet_limit":   {"fr": "Attention: ces résultats sont incomplets, car le paramètre facet.limit est actuellement fixé à une valeur trop basse ([param]) dans la fonction getFormesAuteurs().",
@@ -221,11 +228,35 @@ var author_forms_localization = {
 	var membres_sans_idhal = [];
 	var doublons_sans_idhal = [];
 	var liste_sans_doublons = [];
-	$('#mybiblio-requirements').html(author_forms_localization['searching'][lang]);
+	$('#mybiblio-requirements').html(author_forms_localization['searching'][lang]+"<br/>");
 	$("#mybiblio-requirements").removeClass('alert-danger');
 	$("#mybiblio-requirements").addClass('alert-warning');
 	$("#mybiblio-requirements").addClass('loading');
 	
+	function display_warnings(new_warning_to_add) {
+		var fatal = false;
+		if (new_warning_to_add) {
+			warnings.push(new_warning_to_add);
+		}
+		if (warnings && warnings.length) {
+			$('#mybiblio-requirements').html("");
+			warnings.forEach(function(e) {
+				fatal = fatal | e.fatal;
+				if (author_forms_localization[e.warning])
+					$('#mybiblio-requirements').append(author_forms_localization[e.warning][lang].replace("[param]", e.param)+"<br/>");
+				else
+					$('#mybiblio-requirements').append(author_forms_localization['unknown-warn'][lang]+"<br/>");
+			});
+		}
+		if (fatal) {
+			$("#mybiblio-requirements").addClass('alert-danger');
+			$("#mybiblio-requirements").removeClass('alert-warning');
+			$("#mybiblio-requirements").removeClass('loading');
+		} else {
+			$("#mybiblio-requirements").addClass('alert-warning');
+		}
+	}
+
 Promise.all([
 	loadScript("../public/lazy.js"),
 	loadScript("../public/config.js"),
@@ -235,29 +266,18 @@ Promise.all([
 	/* 1) Récupération rapide et simple des infos pour les quelques formes auteurs qui ont un idhal : */
 	
 	$.when (getMembresLabo(function(liste) {listeMembres=liste;}, function(errno) {
-			$('#liste_membres_labo').html("<tr><td>Une erreur est survenue lors de la recuperation de la liste des membres du labo.</td></tr>");
-			$("#mybiblio-requirements").addClass('alert-danger');
-			$("#mybiblio-requirements").removeClass('alert-warning');
-			$("#mybiblio-requirements").removeClass('loading');
+			display_warnings({warning: "retrieving_lab_staff_err", fatal: true});
 		}), getFormesAuteurs(my_config.code_collection, my_config.codes_structures_labo, function(liste, w, raw_data) {
 				listeFormesAuteurs=liste;
 				warnings=w;
 				facet_pivot_raw_data = raw_data;
-			}, function(errno) {
-				$('#liste_membres_labo').html("<tr><td>Une erreur est survenue lors de la recuperation des formes auteurs.</td></tr>");
+			}, function(errno, foo, data) {
+				display_warnings({warning: "retrieving_author_forms_err", param: "<br/><pre>"+data.error.msg+"</pre>", fatal: true});
 			}, facet_limit_for_query1 + extra_criteria_for_query1)
 	).done(function (response1, response2) {
 		
 		$('aside.legende').show();
-		if (warnings && warnings.length) {
-		  $('#mybiblio-requirements').html("");
-		  warnings.forEach(function(e) {
-		  	  if (author_forms_localization[e.warning])
-			    $('#mybiblio-requirements').append(author_forms_localization[e.warning][lang].replace("[param]", e.param)+"<br/>");
-			  else
-			    $('#mybiblio-requirements').append(author_forms_localization['unknown-warn'][lang]+"<br/>");
-		  });
-		}
+		display_warnings();
 		
 		Lazy(listeMembres).sortBy(function(x) {return x.nom+" "+x.prenom}).each(function(x){
 			x.full_name=x.nom+" "+x.prenom;
@@ -281,7 +301,7 @@ Promise.all([
 			if (index) {
 				if (!index.formes_auteurs) { index.formes_auteurs = []; }
 				index.formes_auteurs.push(liste_sans_doublons[i]);
-				if (index.idHal_s=="") {
+				if (index.idHal_s=="" && liste_sans_doublons[i].idhal!=="") {
 					index.idHal_s=liste_sans_doublons[i].idhal;
 					index_membres_par_idhal_s[index.idHal_s]=index;
 				}
@@ -373,101 +393,107 @@ Promise.all([
 				$('tr#doublon-'+validClassName(membres_sans_idhal[i].name)+' td:nth-child(5)').html(membres_sans_idhal[i].nb_depots);
 			}
 			query = 'q=authFullName_t:' + query + '&sort=submittedDate_tdate%20desc&fl=submittedDate_s&rows=0&wt=json&facet=true&facet.field=authIdFullName_fs&facet.mincount=1&facet.limit='+facet_limit_for_query2_and_3 + extra_criteria_for_query2_and_3;
-			console.log(query);
-		}
-		$.ajax("https://api.archives-ouvertes.fr/search/"+my_config.code_collection, {data: query, dataType: 'json', jsonp: false, success: function( d ) {
-		  var reponses = d.facet_counts.facet_fields.authIdFullName_fs;
-		  if (reponses !== undefined) {
-			  var index_authors = [];
-			  for (var i = 0; i < reponses.length; i+=2) {
-			    var rep = reponses[i]+'';
-			    rep = rep.split(/_FacetSep_|_JoinSep_/);
-			    var name = rep[1].split(/\s/);
-			    index_authors[rep[0]]={"full_name": name.splice(1).join(" ")+" "+name[0]};
-			  }
-			  		  	
-			  /* Pour des questions d'optimisation, on présuppose ici que les facets sont triées par ordre lexical, c.a.d. &facet.sort=index : */
+			// console.log(query);
+			$.ajax("https://api.archives-ouvertes.fr/search/"+my_config.code_collection, {data: query, dataType: 'json', jsonp: false, success: function( d ) {
+				var reponses = d.facet_counts.facet_fields.authIdFullName_fs;
+				if (reponses !== undefined) {
+					var index_authors = [];
+					var invalid_authorIDs = [];
+					for (var i = 0; i < reponses.length; i+=2) {
+						var rep = reponses[i]+'';
+						rep = rep.split(/_FacetSep_|_JoinSep_/);
+						var name = rep[1].split(/\s/);
+						var authorID = parseInt(rep[0], 10);
+						if (authorID == rep[0] && authorID > 0)
+							index_authors[rep[0]]={"full_name": name.splice(1).join(" ")+" "+name[0]};
+						else
+							invalid_authorIDs.push(authorID + ": " + name);
+					}
+					if (invalid_authorIDs.length) {
+						display_warnings({warning: "searching_dates_err", param: "invalid author id " + invalid_authorIDs[0] + (invalid_authorIDs.length>1 ? " (and "+(invalid_authorIDs.length-1)+" other similar cases)" : "")});
+					}
+									
+					/* Pour des questions d'optimisation, on présuppose ici que les facets sont triées par ordre lexical, c.a.d. &facet.sort=index : */
 
-			  if (d && d.facet_counts.facet_pivot) {
-			  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,submittedDateY_i,submittedDateM_i,submittedDateD_i"]);
-			  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,producedDateY_i,producedDateM_i,producedDateD_i"]);
-			  }
+					if (d && d.facet_counts.facet_pivot) {
+						compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,submittedDateY_i,submittedDateM_i,submittedDateD_i"]);
+						compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,producedDateY_i,producedDateM_i,producedDateD_i"]);
+					}
+				
+					var author_dates_errors = [];
+					Object.keys(index_authors).forEach(function (author_id, i) {
+						try {
+							update_dates_for_author(index_authors, author_id, "sans-idhal-"+validClassName(index_authors[author_id].full_name));
+						} catch {
+							author_dates_errors.push(author_id + ": " + index_authors[author_id].full_name);
+						}
+					});
+					if (author_dates_errors.length) {
+						display_warnings({warning: "searching_dates_err", param: "update_dates_for_author() raised an exception for " + author_dates_errors[0] + (author_dates_errors.length>1 ? " (and "+(author_dates_errors.length-1)+" other similar cases)" : "")});
+					}
+
+				}
 			
-			  try {
-			    Object.keys(index_authors).forEach(function (author_id, i) {
-			      update_dates_for_author(index_authors, author_id, "sans-idhal-"+validClassName(index_authors[author_id].full_name));
-			    });
-			  } catch {
-					$("#mybiblio-requirements").addClass('alert-warning');
-			    $('#mybiblio-requirements').append("<br/>"+author_forms_localization['searching_dates_err'][lang]);
-					warnings.push({warning: "searching_dates_err"});
-			  }
-		  }
-		  
-		  /* 3) Récupération du nombre de dépôts pour les formes auteurs sans idhal qui sont en doublon avec une forme auteur avec idhal : */
-		  
-		  var query = "";
-		  if (doublons_sans_idhal.length>0) {
-			query = "("+encodeURIComponent(doublons_sans_idhal[0].name)+")";
-			for (var i = 1; i < doublons_sans_idhal.length; i++) {
-				query = query + "+OR+("+encodeURIComponent(doublons_sans_idhal[i].name)+")";
-			}
-			for (var i = 0; i < doublons_sans_idhal.length; i++) {
-				$('tr#doublon-'+validClassName(doublons_sans_idhal[i].name)+' td:nth-child(5)').html(doublons_sans_idhal[i].nb_depots);
-			}
-			query = 'q=authFullName_t:' + query + '&sort=submittedDate_tdate%20desc&fl=submittedDate_s&rows=0&wt=json&facet=true&facet.field=authIdHasStructure_fs&facet.mincount=1&facet.limit='+facet_limit_for_query2_and_3 + extra_criteria_for_query2_and_3;
-			console.log(query);
-		  }
-		  $.ajax("https://api.archives-ouvertes.fr/search/"+my_config.code_collection, {data: query, dataType: 'json', jsonp: false, success: function( d ) {
-				  var reponses = d.facet_counts.facet_fields.authIdHasStructure_fs;
-				  if (reponses !== undefined) {
-		 			  var index_authors = [];
-					  for (var i = 0; i < reponses.length; i+=2) {
-					    var rep = reponses[i]+'';
-					    rep = rep.split(/_FacetSep_|_JoinSep_/);
-					    if (rep[2]=="199944" || rep[2]=="107319") {
-					    	var name = rep[1].split(/\s/);
-					    	index_authors[rep[0]]={"full_name": name.splice(1).join(" ")+" "+name[0], "nb_depots": reponses[i+1]};
-					    }
-					  }
-						  		  	
-					  /* Pour des questions d'optimisation, on présuppose ici que les facets sont triées par ordre lexical, c.a.d. &facet.sort=index : */
-		
-					  if (d && d.facet_counts.facet_pivot) {
-					  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,submittedDateY_i,submittedDateM_i,submittedDateD_i"]);
-					  	compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,producedDateY_i,producedDateM_i,producedDateD_i"]);
-					  }
-					  
-					  try {
-					    Object.keys(index_authors).forEach(function (author_id, i) {
-					      var className = "doublon-"+validClassName(index_authors[author_id].full_name);
-					      update_dates_for_author(index_authors, author_id, className);
-					      $('tr#'+className+' td:nth-child(5)').html( ( author_id ? "<a target='blank' class='btn btn-default btn-xs pull-right' href='/"+my_config.code_collection+"/search/index/?q=authId_i%3A"+author_id+"&sort=submittedDate_tdate+desc'>"+index_authors[author_id].nb_depots+"</a>" : index_authors[author_id].nb_depots ) );
-					    });
-					  } catch {
-					    $("#mybiblio-requirements").addClass('alert-warning');
-					    $('#mybiblio-requirements').append("<br/>"+author_forms_localization['get_nb_depots_err'][lang]);
-					    warnings.push({warning: "get_nb_depots_err"});
-					  }
-				  }
-				  $('#mybiblio-requirements').html("");
-				  $("#mybiblio-requirements").removeClass('loading');
-				  if (!warnings || !warnings.length) {
-				    $('#mybiblio-requirements').hide();
-				  } else {
-						$("#mybiblio-requirements").addClass('alert-warning');
-				    warnings.forEach(function (e) {
-				      if (author_forms_localization[e.warning])
-				        $('#mybiblio-requirements').append(author_forms_localization[e.warning][lang].replace("[param]", e.param)+"<br/>");
-				      else
-				        $('#mybiblio-requirements').append(author_forms_localization['unknown-warn'][lang]+"<br/>");
-				    });
-				  }
-				  $(function() {
-				    $("#liste_membres_labo").tablesorter();
-				  });
-				}});
-		}});
+				/* 3) Récupération du nombre de dépôts pour les formes auteurs sans idhal qui sont en doublon avec une forme auteur avec idhal : */
+				
+				var query = "";
+				if (doublons_sans_idhal.length>0) {
+					query = "("+encodeURIComponent(doublons_sans_idhal[0].name)+")";
+					for (var i = 1; i < doublons_sans_idhal.length; i++) {
+						query = query + "+OR+("+encodeURIComponent(doublons_sans_idhal[i].name)+")";
+					}
+					for (var i = 0; i < doublons_sans_idhal.length; i++) {
+						$('tr#doublon-'+validClassName(doublons_sans_idhal[i].name)+' td:nth-child(5)').html(doublons_sans_idhal[i].nb_depots);
+					}
+					query = 'q=authFullName_t:' + query + '&sort=submittedDate_tdate%20desc&fl=submittedDate_s&rows=0&wt=json&facet=true&facet.field=authIdHasStructure_fs&facet.mincount=1&facet.limit='+facet_limit_for_query2_and_3 + extra_criteria_for_query2_and_3;
+					//console.log(query);
+					$.ajax("https://api.archives-ouvertes.fr/search/"+my_config.code_collection, {data: query, dataType: 'json', jsonp: false, success: function( d ) {
+						var id_structures = my_config.codes_structures_labo;
+						var reponses = d.facet_counts.facet_fields.authIdHasStructure_fs;
+						if (reponses !== undefined) {
+							var index_authors = [];
+							for (var i = 0; i < reponses.length; i+=2) {
+								var rep = reponses[i]+'';
+								rep = rep.split(/_FacetSep_|_JoinSep_/);
+								for (var j = 0; j < id_structures.length; j++)
+									if (rep[2]==id_structures[j]) {
+										var name = rep[1].split(/\s/);
+										index_authors[rep[0]]={"full_name": name.splice(1).join(" ")+" "+name[0], "nb_depots": reponses[i+1]};
+										break;
+									}
+							}
+							
+							/* Pour des questions d'optimisation, on présuppose ici que les facets sont triées par ordre lexical, c.a.d. &facet.sort=index : */
+			
+							if (d && d.facet_counts.facet_pivot) {
+								compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,submittedDateY_i,submittedDateM_i,submittedDateD_i"]);
+								compute_first_and_last_dates_for_query_2_and_3(index_authors, d.facet_counts.facet_pivot["authId_i,producedDateY_i,producedDateM_i,producedDateD_i"]);
+							}
+							
+							try {
+								Object.keys(index_authors).forEach(function (author_id, i) {
+									var className = "doublon-"+validClassName(index_authors[author_id].full_name);
+									update_dates_for_author(index_authors, author_id, className);
+									$('tr#'+className+' td:nth-child(5)').html( ( author_id ? "<a target='blank' class='btn btn-default btn-xs pull-right' href='/"+my_config.code_collection+"/search/index/?q=authId_i%3A"+author_id+"&sort=submittedDate_tdate+desc'>"+index_authors[author_id].nb_depots+"</a>" : index_authors[author_id].nb_depots ) );
+								});
+							} catch {
+								display_warnings({warning: "get_nb_depots_err"});
+							}
+						}
+						$('#mybiblio-requirements').html("");
+						$("#mybiblio-requirements").removeClass('loading');
+						if (!warnings || !warnings.length) {
+							$('#mybiblio-requirements').hide();
+						} else {
+							display_warnings();
+						}
+						$(function() {
+							$("#liste_membres_labo").tablesorter();
+						});
+					}});
+				}
+			}});
+		}
 	});
 }); // end of the loadScript Promises hack
 // ]]></script>
