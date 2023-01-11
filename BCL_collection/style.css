@@ -253,6 +253,7 @@ z-index: 1;
 padding: 8px;
 color: #555555;
 background-color: #dddddd; 
+text-align: left;
 }
 .voir-aussi ul {
 list-style: none;

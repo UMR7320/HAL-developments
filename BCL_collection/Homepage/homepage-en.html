@@ -10,8 +10,8 @@
 <div class="col-xs-5 col-sm-3 col-md-3 col-lg-3 voir-aussi"><widget>{"type":"link","title":"See also","links":{"http://bcl.cnrs.fr/?lang=en":"BCL's web site"}}</widget></div>
 <div class="col-xs-7 col-sm-4 col-md-3 col-lg-3"><widget>{"type":"openaccess","title":"Open access (documents with file vs simple notices)"}</widget></div>
 </div>
-<div class="row">
-<div class="col-xs-12 col-sm-12 col-md-8 col-lg-6">
+<div class="row" style="display: block;">
+<div class="float-left col-xs-12 col-sm-12 col-md-8 col-lg-6">
 <div id="boutons_supplementaires" class="btn-group" style="margin-bottom: 10px;">
 <div><button id="btn-flux" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown">
 		<span class="glyphicon glyphicon-rss" style="background: url('/BCL/public/logo_ATOM_CC_NC_32px.png') no-repeat; background-size:100%; width:16px; height:16px; display:inline-block; margin-right:10px; position:relative; top:-1px;">&nbsp;</span>Feed <span class="caret">&nbsp;</span>
@@ -23,17 +23,16 @@
 </div>
 </div>
 <widget>{"type":"last","title":"Lastest documents submitted on HAL","limit":"15"}</widget></div>
-<div class="hidden-sm hidden-md hidden-lg" style="font-size: 1px;">&nbsp;<!-- evite l'apparition d'un bug du à la combinaison float-right + width 100% sur le div precedent --></div>
-<div class="col-xs-6 col-sm-6 col-sm-offset-0 col-md-4 col-lg-3"><widget>{"type":"count","title":"# of documents","format":"file"}</widget></div>
-<div class="col-xs-6 col-sm-6 col-sm-offset-0 col-md-4 col-lg-3"><widget>{"type":"count","title":"# of notices","format":"notice"}</widget></div>
-<div class="hidden-sm hidden-md hidden-lg" style="font-size: 1px;">&nbsp;<!-- evite l'apparition d'un bug du à la combinaison float-right + width 100% sur le div precedent --></div>
-<div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 graphique-distribution"><widget>{"type":"stats","title":"Distribution by type","format":"typdoc"}</widget></div>
-<div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 graphique-evolution"><widget>{"type":"stats","title":"Evolution","format":"evol"}</widget></div>
-<div class="col-xs-12 col-sm-6 col-md-4 col-lg-6"><widget>{"type":"cloud","title":"Word cloud"}</widget></div>
-<div class="hidden-sm hidden-md hidden-lg" style="font-size: 1px;">&nbsp;<!-- evite l'apparition d'un bug du à la combinaison float-right + width 100% sur le div precedent --></div>
-<div class="col-xs-12 col-sm-6 col-md-8 col-md-offset-0 col-lg-6">
+<div class="float-right col-xs-6 col-sm-6 col-sm-offset-0 col-md-4 col-lg-3"><widget>{"type":"count","title":"# of documents","format":"file"}</widget></div>
+<div class="float-right col-xs-6 col-sm-6 col-sm-offset-0 col-md-4 col-lg-3"><widget>{"type":"count","title":"# of notices","format":"notice"}</widget></div>
+<div class="float-right col-xs-12 col-sm-6 col-md-4 col-lg-3 graphique-distribution"><widget>{"type":"stats","title":"Distribution by type","format":"typdoc"}</widget></div>
+<div class="float-right col-xs-12 col-sm-6 col-md-4 col-lg-3 graphique-evolution"><widget>{"type":"stats","title":"Evolution","format":"evol"}</widget></div>
+<div class="float-right col-xs-12 col-sm-6 col-md-4 col-lg-6"><widget>{"type":"cloud","title":"Word cloud"}</widget></div>
+<div class="float-right col-xs-12 col-sm-6 col-md-8 col-md-offset-0 col-lg-6">
 <div id="boutons_supplementaires" class="btn-group" style="margin-bottom: 10px;">
 <div><a class="btn btn-default btn-sm" title="BCL's website RSS Feed" href="http://bcl.cnrs.fr/spip.php?page=backend&amp;lang=en" type="button"> <span class="glyphicon glyphicon-rss" style="background: url('/BCL/public/logo_ATOM_CC_NC_32px.png') no-repeat; background-size: 100%; width: 16px; height: 16px; display: inline-block; margin-right: 10px; position: relative; top: -1px;">&nbsp;</span>RSS Feed </a></div>
 </div>
 <widget>{"type":"feed","title":"BCL's website RSS Feed","href":"http://bcl.cnrs.fr/spip.php?page=backend&amp;lang=fr","limit":"10"}</widget></div>
+<div class="float-left col-xs-12 col-sm-12 col-md-8 col-md-offset-0 col-lg-6"><widget>{"type":"cartohal","title":"Collaborations","display":"map","searchCriteria":"structCountry_s"}</widget></div>
 </div>
+<div class="row" style="clear:both;"></div>
